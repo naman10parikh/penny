@@ -10,6 +10,7 @@ set -euo pipefail
 
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 MEMORY_DIR="$PROJECT_DIR/memory"
+BRAIN_DIR="$PROJECT_DIR/brain"
 VAULT_DIR="$PROJECT_DIR/vault"
 RULES_DIR="$PROJECT_DIR/.claude/rules"
 
@@ -31,7 +32,8 @@ while [[ $# -gt 0 ]]; do
     --help|-h)
       echo "Usage: memory-search.sh \"query\" [--limit N] [--verbose]"
       echo ""
-      echo "Searches across Energy's memory system:"
+      echo "Searches across penny's memory system:"
+      echo "  - brain/*.md (the payments expertise brain — primary index)"
       echo "  - memory/LEARNINGS.md (learnings & patterns)"
       echo "  - memory/daily/*.md (session logs)"
       echo "  - memory/topics/*.md (permanent topic files)"
@@ -67,6 +69,7 @@ trap "rm -f $RESULTS_FILE" EXIT
 weight_for_source() {
   local file="$1"
   case "$file" in
+    */brain/*)           echo 6 ;;  # penny override: the expertise brain IS the queryable index
     */.claude/rules/*)   echo 5 ;;  # Rules are highest priority
     */memory/LEARNINGS*) echo 4 ;;  # Learnings are core knowledge
     */memory/topics/*)   echo 4 ;;  # Topic files are curated
@@ -164,6 +167,13 @@ extract_context() {
 
 # Build file list to search
 FILES=()
+
+# Brain artifacts — penny's expertise index (the override: index brain/, not code history).
+# The six brain artifacts are the primary corpus; queries like "idempotency one transaction"
+# resolve to O-02 / S-02 / P-02 here.
+for f in "$BRAIN_DIR"/*.md; do
+  [ -f "$f" ] && FILES+=("$f")
+done
 
 # LEARNINGS.md
 [ -f "$MEMORY_DIR/LEARNINGS.md" ] && FILES+=("$MEMORY_DIR/LEARNINGS.md")
