@@ -1,17 +1,27 @@
-# {{AGENT_NAME}} — Memory
+# penny — Memory (pointer)
+
+> penny's bootstrap memory and queryable expertise live one layer up — this file is a pointer, not a second
+> source of truth (consolidate, never duplicate). Powered by Energy.
 
 ## Bootstrap (loaded every cycle)
 
-- Strategy: {{STRATEGY}}
-- Platform: {{PLATFORM}}
-- Created: {{DATE}}
-- Last successful scan: (updated by agent)
-- Key learnings: (appended by agent)
+The critical payments facts — the JTBD-0 ledger-is-truth LAW + 4 corollaries, the version baseline
+(`2026-05-27.dahlia` / flexible billing mode), and the helios boundary — are in **`memory/MEMORY.md`**
+(≤1500-word bootstrap).
 
-## Patterns Discovered
+## Queryable expertise
 
-(Agent appends patterns here as it learns from experience)
+The full expertise brain is **`brain/`** (six artifacts: EXPERTISE-MAP, OPINIONS, KNOWN-PITFALLS,
+BATTLE-TESTED-SCENARIOS, TOOL-MATRIX, GAPS-AND-DISPUTES). Query it with BM25 ranking:
 
-## Errors Encountered
+```bash
+bash scripts/memory-search.sh "your billing question"
+```
 
-(Agent logs errors and fixes here to prevent repetition)
+This is the same engine `penny explain` (CLI) and the cockpit Ask-the-employee view reuse.
+
+## Patterns & errors
+
+Session-scoped learnings append to `memory/LEARNINGS.md`; daily logs to `memory/daily/`. The RSI nightly loop
+promotes resolved `brain/GAPS-AND-DISPUTES.md` items into the brain — the GAPS file shrinking is the visible
+measure of penny getting smarter.
