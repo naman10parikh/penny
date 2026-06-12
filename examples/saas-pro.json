@@ -1,0 +1,40 @@
+{
+  "$schema": "../src/wire/spec.schema.json",
+  "name": "SaaS Pro",
+  "description": "Example product spec for the penny acceptance test: one product + one recurring price + one metered price.",
+  "apiVersion": "2026-05-27.dahlia",
+  "billingMode": "flexible",
+  "product": {
+    "name": "Pro",
+    "description": "The Pro tier."
+  },
+  "prices": [
+    {
+      "kind": "recurring",
+      "currency": "usd",
+      "unitAmount": 2900,
+      "interval": "month",
+      "taxBehavior": "exclusive"
+    },
+    {
+      "kind": "metered",
+      "currency": "usd",
+      "meter": {
+        "eventName": "pro_api_calls",
+        "aggregation": "sum",
+        "unit": "request"
+      },
+      "unitAmount": 1,
+      "taxBehavior": "exclusive"
+    }
+  ],
+  "checkout": {
+    "uiMode": "hosted",
+    "successUrl": "https://example.com/success",
+    "cancelUrl": "https://example.com/cancel"
+  },
+  "webhook": {
+    "path": "/api/webhooks/stripe",
+    "rawBody": true
+  }
+}
