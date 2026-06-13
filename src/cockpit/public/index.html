@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en" data-scroll-behavior="smooth">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>penny · cockpit</title>
+  <link rel="icon" href="data:," />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <!-- Instrument Serif DISPLAY + Poppins body — penny's BRAND.md pairing (serif+sans is the #1
+       anti-AI-look move; PLAN §10). Warm-black #141312 + amber/copper (penny = coin) only. -->
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="masthead">
+    <div>
+      <div class="wordmark">penny<span class="dot">.</span></div>
+      <p class="tagline">The Energy fleet's payments employee &mdash; it counts every cent and trusts no status code. This cockpit shows what penny knows, what it has run, and what it is still learning. Powered by Energy.</p>
+    </div>
+    <div class="stat-strip" aria-label="summary">
+      <div class="stat"><div class="v num" id="stat-runs">&mdash;</div><div class="k">runs</div></div>
+      <div class="stat"><div class="v num" id="stat-audit">&mdash;</div><div class="k">money lines</div></div>
+      <div class="stat"><div class="v num" id="stat-brain">&mdash;</div><div class="k">brain notes</div></div>
+      <div class="stat"><div class="v num" id="stat-gaps">&mdash;</div><div class="k">open gaps</div></div>
+    </div>
+  </header>
+
+  <div class="shell">
+    <!-- the 5 cockpit views — the nav rail (PLAN §10). Each button switches the stage to that view.
+         View anchors (G2 verify greps for these labels): -->
+    <nav class="rail" aria-label="Views">
+      <button data-view="brain" aria-current="true"><span class="glyph">B</span> Brain Browser</button>
+      <button data-view="runs"><span class="glyph">R</span> Run Log</button>
+      <button data-view="evals"><span class="glyph">E</span> Eval Scores</button>
+      <button data-view="ask"><span class="glyph">A</span> Ask the Employee</button>
+      <button data-view="gaps"><span class="glyph">G</span> Gaps Tracker</button>
+      <div class="rail-foot">
+        Read-only window into penny. The Ask box runs the keyless brain BM25 over <code>brain/</code>
+        &mdash; no provider keys, the same engine as <code>penny explain</code>.<br /><br />
+        <kbd>/</kbd> focus search &middot; <kbd>Esc</kbd> back to brain
+      </div>
+    </nav>
+
+    <!-- the single mount point: app.js renders the active view here -->
+    <main id="stage" class="stage" aria-live="polite">
+      <div class="spinner">loading the cockpit&hellip;</div>
+    </main>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

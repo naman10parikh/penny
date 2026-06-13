@@ -20,6 +20,7 @@ import { registerReconcile } from "./reconcile.js";
 import { registerWire } from "../wire/command.js";
 import { registerReview } from "../review/command.js";
 import { registerRunsView } from "../obs/runs-view.js";
+import { registerCockpit } from "./cockpit.js";
 import { logRun } from "../obs/log-run.js";
 
 export function buildProgram(): Command {
@@ -45,6 +46,7 @@ export function buildProgram(): Command {
   registerMeter(program); // create a Meter "named like a public API"; refuse re-create
   registerCheckVersion(program); // contract-test the pinned API version shape ($0)
   registerExplain(program); // ask-the-employee: query the brain (BM25) → cited answer
+  registerCockpit(program); // the localhost read-surface (5 views: brain · runs · evals · ask · gaps)
   registerRunsView(program); // observability: aggregate logs/runs.jsonl + the money-action trail
 
   return program;

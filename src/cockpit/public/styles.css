@@ -1,0 +1,284 @@
+/* penny cockpit — warm-black + amber/copper instrument console (Cluster G / PLAN §10).
+   Tokens are penny's BRAND.md design system (the coin: copper/amber on warm black):
+   warm-black #141312 (NEVER pure #000 / near-black #09090b), amber #f5a623 accent (the coin),
+   deeper copper for secondary, money-status green/red, Instrument Serif display + Poppins body
+   (the serif+sans pairing is the #1 anti-AI-look move). Asymmetric/bento, no off-brand AI gradient
+   tints, no gray placeholder boxes, no cards-in-cards. Money-relevant audit lines render as
+   adaptive status cards (amber/green/red), not plain badges. */
+
+:root {
+  /* ---- warm-black surface ramp (BRAND.md: #141312 base, never #000) ---- */
+  --bg: #141312;             /* page — warm black */
+  --bg-2: #1a1816;           /* recessed sections */
+  --surface-1: #1c1a18;      /* card core (BRAND --penny-bg-elev) */
+  --surface-2: #232019;      /* raised control / hover */
+  --surface-3: #2a2620;      /* log gutter / code */
+  --hairline: #2a2722;       /* 1px border (BRAND --penny-border) */
+  --hairline-2: rgba(236, 232, 225, 0.07); /* row divider */
+
+  /* ---- text (warm off-white — NOT pure #fff on dark) ---- */
+  --text-hi: #ece8e1;        /* BRAND --penny-text */
+  --text-mid: rgba(236, 232, 225, 0.82);
+  --text-lo: #a39c8f;        /* BRAND --penny-text-dim */
+
+  /* ---- THE accent: amber/copper, the coin (BRAND --penny-amber; warm hue only) ---- */
+  --accent: #f5a623;         /* primary amber */
+  --accent-2: #b87333;       /* deeper copper (secondary highlight) */
+  --accent-dim: rgba(245, 166, 35, 0.16); /* active nav, chip bg, focus fill */
+  --accent-ring: rgba(245, 166, 35, 0.5); /* focus ring, hover border */
+  --accent-hover: #c8851b;   /* BRAND --penny-amber-dim */
+
+  /* ---- semantic money/status palette (BRAND green/red) ---- */
+  --ok: #4caf7e;             /* paid / money-moved / pass / exit 0 (BRAND --penny-green) */
+  --warn: #f5a623;           /* pending / skip — reuses amber */
+  --err: #e5534b;            /* divergence / failed / audit alarm (BRAND --penny-red) */
+  --ok-dim: rgba(76, 175, 126, 0.16);
+  --warn-dim: rgba(245, 166, 35, 0.16);
+  --err-dim: rgba(229, 83, 75, 0.14);
+
+  /* ---- spacing (4px base) · radii (concentric) · motion (sub-300ms ease-out) ---- */
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px; --s7: 48px; --s8: 64px;
+  --r-sm: 8px; --r-md: 14px; --r-lg: 22px;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --t-fast: 160ms; --t-mid: 260ms;
+
+  /* ---- type: Instrument Serif DISPLAY; Poppins body (BRAND.md) ---- */
+  --font-body: "Poppins", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Instrument Serif", ui-serif, Georgia, "Times New Roman", serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { height: 100%; }
+body {
+  min-height: 100%;
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 15px;
+  line-height: 1.6;
+  letter-spacing: 0.004em;
+  color: var(--text-hi);
+  background: var(--bg);
+  /* faint warm amber ambient so panels read layered — single hue, on-brand (NOT a cool AI glow) */
+  background-image:
+    radial-gradient(820px 560px at 86% -10%, rgba(245, 166, 35, 0.05), transparent 60%),
+    radial-gradient(640px 480px at -6% 112%, rgba(184, 115, 51, 0.04), transparent 55%);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+  font-variant-numeric: tabular-nums; /* tabular numbers — penny counts in columns (BRAND.md) */
+}
+
+a { color: inherit; }
+code, .mono { font-family: var(--font-mono); }
+
+/* ---------------------------------------------------------------- masthead --- */
+.masthead {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr; /* asymmetric */
+  gap: var(--s6);
+  align-items: end;
+  padding: var(--s7) var(--s7) var(--s5);
+  border-bottom: 1px solid var(--hairline);
+}
+.wordmark {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(2.4rem, 4.8vw, 3.6rem);
+  line-height: 1;
+  letter-spacing: -0.005em;
+}
+.wordmark .dot { color: var(--accent); }
+.tagline { color: var(--text-lo); font-size: 0.95rem; max-width: 56ch; margin-top: var(--s2); }
+.stat-strip { display: flex; gap: var(--s5); justify-content: flex-end; flex-wrap: wrap; }
+.stat { text-align: right; }
+.stat .v { font-family: var(--font-display); font-size: 2.1rem; line-height: 1; color: var(--accent); }
+.stat .k { font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-lo); margin-top: var(--s1); }
+
+/* ---------------------------------------------------------------- shell ------ */
+.shell { display: grid; grid-template-columns: 220px 1fr; gap: 0; min-height: 62vh; }
+.rail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+  padding: var(--s5) var(--s4);
+  border-right: 1px solid var(--hairline);
+}
+.rail button {
+  display: flex; align-items: center; gap: var(--s3);
+  width: 100%; text-align: left;
+  padding: var(--s3) var(--s4);
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-mid);
+  font: inherit;
+  cursor: pointer;
+  transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+}
+@media (hover: hover) { .rail button:hover { background: var(--surface-1); color: var(--text-hi); } }
+.rail button[aria-current="true"] {
+  background: var(--accent-dim);
+  color: var(--text-hi);
+  border-color: var(--accent-ring);
+}
+.rail .glyph { font-family: var(--font-display); font-style: italic; color: var(--accent); width: 1.1rem; text-align: center; font-size: 1.1rem; }
+.rail-foot { margin-top: auto; color: var(--text-lo); font-size: 0.78rem; line-height: 1.5; }
+.rail-foot code { font-family: var(--font-mono); color: var(--accent-2); font-size: 0.92em; }
+.rail-foot kbd { font-family: var(--font-mono); background: var(--surface-2); padding: 0 var(--s1); border-radius: 4px; }
+
+.stage { padding: var(--s6) var(--s7); }
+.view-title { font-family: var(--font-display); font-weight: 400; font-size: 2rem; margin-bottom: var(--s2); }
+.view-sub { color: var(--text-lo); font-size: 0.92rem; margin-bottom: var(--s5); max-width: 74ch; }
+
+/* ---------------------------------------------------------------- panels ----- */
+/* ONE card surface per region (no cards nested in cards). Hierarchy via type + space. */
+.bento { display: grid; grid-template-columns: repeat(6, 1fr); gap: var(--s4); }
+.panel {
+  background: var(--surface-1);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+  padding: var(--s5);
+}
+.panel.wide { grid-column: span 4; }
+.panel.narrow { grid-column: span 2; }
+.panel.full { grid-column: span 6; }
+.panel h3 { font-family: var(--font-display); font-weight: 400; font-size: 1.4rem; margin-bottom: var(--s2); }
+.panel p { color: var(--text-mid); font-size: 0.92rem; }
+.muted { color: var(--text-lo); }
+
+/* status chips — color + a glyph + a label (never color alone) */
+.chip { display: inline-flex; align-items: center; gap: var(--s1); font-size: 0.74rem; font-weight: 600; padding: 2px var(--s2); border-radius: 999px; letter-spacing: 0.02em; }
+.chip.ok { background: var(--ok-dim); color: var(--ok); }
+.chip.skip { background: var(--warn-dim); color: var(--warn); }
+.chip.fail { background: var(--err-dim); color: var(--err); }
+
+/* ---------------------------------------------------------------- tables ----- */
+table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+th, td { text-align: left; padding: var(--s2) var(--s3); border-bottom: 1px solid var(--hairline-2); vertical-align: top; }
+th { color: var(--text-lo); font-weight: 600; font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; }
+td.num { font-variant-numeric: tabular-nums; text-align: right; }
+tr:last-child td { border-bottom: none; }
+
+/* the money-action audit row — amber/red highlight (the ledger-is-truth trail, BRAND.md) */
+tr.money td { background: var(--err-dim); }
+tr.money td:first-child { border-left: 2px solid var(--err); }
+
+/* ---------------------------------------------------------------- search ----- */
+.searchbar { display: flex; gap: var(--s2); margin-bottom: var(--s5); }
+input[type="search"], input[type="text"], textarea {
+  width: 100%;
+  font: inherit;
+  font-size: 16px; /* >=16px input → no iOS zoom-on-focus */
+  color: var(--text-hi);
+  background: var(--surface-2);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-sm);
+  padding: var(--s3) var(--s4);
+}
+input:focus, textarea:focus, button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent-ring); /* box-shadow focus ring (respects border radius) */
+}
+button.go {
+  font: inherit; font-weight: 600;
+  white-space: nowrap;
+  color: var(--bg);
+  background: var(--accent);
+  border: none;
+  border-radius: var(--r-sm);
+  padding: var(--s3) var(--s5);
+  cursor: pointer;
+  transition: transform var(--t-fast) var(--ease), filter var(--t-fast) var(--ease);
+}
+@media (hover: hover) { button.go:hover { transform: translateY(-1px); filter: brightness(1.06); } }
+
+.hit { padding: var(--s4) 0; border-bottom: 1px solid var(--hairline-2); }
+.hit-head { display: flex; align-items: baseline; gap: var(--s3); margin-bottom: var(--s2); }
+.hit-file { font-family: var(--font-mono); font-size: 0.82rem; color: var(--accent); }
+.hit-score { font-size: 0.72rem; color: var(--text-lo); }
+.hit-snip { font-size: 0.84rem; color: var(--text-mid); white-space: pre-wrap; line-height: 1.55; }
+
+/* markdown render region (brain file viewer) */
+.md { font-size: 0.92rem; color: var(--text-mid); line-height: 1.7; }
+.md h1, .md h2, .md h3 { font-family: var(--font-display); font-weight: 400; color: var(--text-hi); margin: var(--s5) 0 var(--s2); }
+.md h1 { font-size: 1.8rem; } .md h2 { font-size: 1.45rem; } .md h3 { font-size: 1.2rem; }
+.md pre { background: var(--surface-3); border: 1px solid var(--hairline); border-radius: var(--r-sm); padding: var(--s4); overflow-x: auto; font-family: var(--font-mono); font-size: 0.82rem; }
+.md code { background: var(--surface-3); padding: 0 4px; border-radius: 4px; font-size: 0.85em; }
+.md pre code { background: none; padding: 0; }
+.md a { color: var(--accent-2); text-decoration: underline; text-underline-offset: 2px; }
+.md ul, .md ol { padding-left: var(--s5); }
+
+/* ---------------------------------------------------------------- eval grid -- */
+.gt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--s3); margin-top: var(--s3); }
+.gt {
+  display: flex; flex-direction: column; gap: var(--s1);
+  padding: var(--s3) var(--s4);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+}
+.gt .gt-id { font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-lo); }
+.gt .gt-state { font-weight: 600; font-size: 0.9rem; }
+.gt.ok .gt-state { color: var(--ok); }
+.gt.fail .gt-state { color: var(--err); }
+.gt.skip .gt-state { color: var(--warn); }
+
+/* the acceptance-test badge — the headline gate (E4) */
+.accept-badge {
+  display: inline-flex; align-items: center; gap: var(--s2);
+  font-family: var(--font-display); font-size: 1.3rem;
+  padding: var(--s3) var(--s5);
+  border-radius: var(--r-md);
+  border: 1px solid var(--accent-ring);
+  background: var(--accent-dim);
+  color: var(--text-hi);
+}
+.accept-badge.wired { border-color: var(--ok); background: var(--ok-dim); }
+.accept-badge .dotlight { width: 10px; height: 10px; border-radius: 999px; background: var(--ok); display: inline-block; }
+.accept-badge.missing { border-color: var(--err); background: var(--err-dim); }
+.accept-badge.missing .dotlight { background: var(--err); }
+
+/* the gaps checklist — a shrinking list (PLAN §10 view 5) */
+.gap-item { display: flex; gap: var(--s4); padding: var(--s4) 0; border-bottom: 1px solid var(--hairline-2); }
+.gap-box { flex: none; width: 22px; height: 22px; border: 2px solid var(--accent-ring); border-radius: 6px; margin-top: 2px; }
+.gap-body .gap-id { font-family: var(--font-mono); font-size: 0.82rem; color: var(--accent); }
+.gap-body .gap-title { font-weight: 600; color: var(--text-hi); }
+.gap-body .gap-why { color: var(--text-lo); font-size: 0.86rem; margin-top: var(--s1); }
+.gap-hi { font-size: 0.68rem; font-weight: 700; color: var(--bg); background: var(--accent); padding: 1px 6px; border-radius: 999px; margin-left: var(--s2); }
+
+/* a non-gray empty state (never a gray placeholder box) — a serif line on the warm base */
+.empty {
+  padding: var(--s8) var(--s5);
+  text-align: center;
+  border: 1px dashed var(--hairline);
+  border-radius: var(--r-md);
+  color: var(--text-lo);
+}
+.empty .big { font-family: var(--font-display); font-style: italic; font-size: 1.5rem; color: var(--text-mid); display: block; margin-bottom: var(--s2); }
+
+/* the wikilink graph (brain browser) — an SVG layout drawn by app.js */
+.graph-wrap { background: var(--surface-1); border: 1px solid var(--hairline); border-radius: var(--r-md); padding: var(--s4); margin-bottom: var(--s5); }
+.graph-wrap svg { width: 100%; height: 260px; display: block; }
+.graph-node { cursor: pointer; }
+.graph-node text { font-size: 11px; fill: var(--text-mid); font-family: var(--font-body); }
+.graph-node circle { fill: var(--surface-2); stroke: var(--accent-ring); }
+.graph-node.core circle { fill: var(--accent-dim); stroke: var(--accent); }
+.graph-edge { stroke: var(--hairline); stroke-width: 1; }
+
+.spinner { color: var(--text-lo); font-style: italic; font-family: var(--font-display); font-size: 1.2rem; padding: var(--s5) 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
+
+@media (max-width: 880px) {
+  .masthead { grid-template-columns: 1fr; }
+  .stat-strip { justify-content: flex-start; }
+  .shell { grid-template-columns: 1fr; }
+  .rail { flex-direction: row; flex-wrap: wrap; border-right: none; border-bottom: 1px solid var(--hairline); }
+  .rail button { width: auto; }
+  .rail-foot { display: none; }
+  .bento { grid-template-columns: 1fr; }
+  .panel.wide, .panel.narrow, .panel.full { grid-column: span 1; }
+  .stage { padding: var(--s5) var(--s4); }
+}
