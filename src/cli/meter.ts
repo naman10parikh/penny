@@ -6,6 +6,7 @@
 
 import { Command } from "commander";
 import chalk from "chalk";
+import { validateMeterEventTimestamp, type BillingPeriod } from "../wire/meter-event.js";
 
 const VALID_AGGREGATIONS = ["sum", "count", "last"] as const;
 type Aggregation = (typeof VALID_AGGREGATIONS)[number];
@@ -65,5 +66,38 @@ export function registerMeter(program: Command): void {
           chalk.green(`\nMeter spec validated. (Wire to Stripe test-mode meter_events in the wire step.)\n`),
       );
       process.exit(0);
+    });
+
+  // `penny meter validate-event --ts <unix-ms|ISO> [--period-start <ts> --period-end <ts>]`
+  // The S-09 / P-09 loud-rejection guard: refuse to flush a meter event Stripe would SILENTLY DROP
+  // (outside the 35-day / 5-min-future / current-period window). Exit 0 = accepted, exit 1 = would be
+  // dropped (penny alarms instead of leaking revenue — JTBD-0 applied to usage telemetry).
+  meter
+    .command("validate-event")
+    .description("reject a meter event Stripe would silently drop (35-day / 5-min-future / in-period, S-09/P-09)")
+    .requiredOption("--ts <ts>", "the meter event timestamp: unix-ms or ISO date")
+    .option("--period-start <ts>", "current billing period start (unix-ms or ISO) — enables the outside-period check")
+    .option("--period-end <ts>", "current billing period end (unix-ms or ISO)")
+    .option("--now <ts>", "override 'now' (unix-ms or ISO) — for deterministic checks/tests")
+    .action((opts: { ts: string; periodStart?: string; periodEnd?: string; now?: string }) => {
+      const toMs = (s: string): number => (/^\d+$/.test(s.trim()) ? Number(s) : Date.parse(s));
+      const eventTs = toMs(opts.ts);
+      const nowMs = opts.now ? toMs(opts.now) : Date.now();
+      let period: BillingPeriod | undefined;
+      if (opts.periodStart && opts.periodEnd) {
+        period = { startMs: toMs(opts.periodStart), endMs: toMs(opts.periodEnd) };
+      }
+
+      const check = validateMeterEventTimestamp(eventTs, nowMs, period);
+      if (check.accepted) {
+        process.stdout.write(chalk.green(`penny meter validate-event: ACCEPTED\n`) + chalk.dim(`  ${check.message}\n`));
+        process.exit(0);
+      }
+      // Loud rejection — the whole point of S-09 is that a dropped event must NEVER be silent.
+      process.stderr.write(
+        chalk.red(`penny meter validate-event: REJECTED (${check.reason}) — would be SILENTLY DROPPED by Stripe\n`) +
+          `  ${check.message}\n`,
+      );
+      process.exit(1);
     });
 }

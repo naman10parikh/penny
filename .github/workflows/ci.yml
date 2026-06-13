@@ -45,12 +45,22 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-      - name: Install + build + test (red-blocking — Vitest + eval pyramid)
+      - name: "Install + build + test (red-blocking — full Vitest pyramid: unit/component/contract/chaos/E2E-hermetic)"
         if: steps.rt.outputs.armed == 'true'
         run: |
           pnpm install --frozen-lockfile || pnpm install
           pnpm build
           pnpm test
+      - name: "Eval gate (red-blocking — npm run eval: L1 golden + L2/L3 deterministic scorers, $0/no-network)"
+        # `pnpm test` runs the L1/L2/L3 calibration vitests; this runs the eval RUNNER (eval/run.ts) — the
+        # operational gate the RSI loop reads (it emits `EVAL <level> result=pass` + exits 0/1). L1 is the
+        # merge-blocking $0 floor; L2/L3 scorers are deterministic ($0, no LLM) so they're safe in CI without
+        # secrets. RED-BLOCKING: a regressed golden task / sub-F1-gate fails the job. (HARNESS-OVERRIDES §9.)
+        if: steps.rt.outputs.armed == 'true'
+        run: |
+          npm run eval                 # L1 — pure $0 golden-task assertions (the ship floor)
+          npm run eval -- --level l2    # L2 — binary behavioral gate, F1≥0.8 / κ≥0.6 (deterministic)
+          npm run eval -- --level l3    # L3 — trajectory judge (deterministic scorer; PR+nightly tier)
       - name: Skeleton phase
         if: steps.rt.outputs.armed == 'false'
         run: echo "skeleton phase — build gate auto-arms when package.json lands (CP123 Wave B)"
