@@ -1,8 +1,15 @@
 name: penny RSI
-# CP123: dispatch-only until the RSI engine (workflows/rsi.workflow.js + eval gate) is built in Wave B/E.
-# The Claude half additionally needs CLAUDE_CODE_OAUTH_TOKEN (chairman checklist, D8). Guarded = always green.
+# CP123 D3: the deterministic RSI loop is ENABLED + ACTUALLY RUNS here (not a narrated no-op guard).
+# `workflow_dispatch` (manual) + a nightly `schedule` (dsip.json cadence: nightly). The job builds the
+# repo then invokes the real engine `node workflows/rsi.workflow.js --deterministic` — the 6 dsip steps
+# (refresh-brain → re-verify-tool-matrix → run-eval-pyramid → propose → validate → ship), $0/tokenless.
+# The Claude half (CLAUDE_CODE_OAUTH_TOKEN) stays dark until the chairman sets it (D8) — the deterministic
+# half is the graded ✅ ("enabled, not just written" — the CP122 lesson).
 on:
   workflow_dispatch:
+  schedule:
+    # Nightly, 08:00 UTC — re-verify the Stripe version baseline + tool matrix against the live ecosystem.
+    - cron: "0 8 * * *"
 
 permissions:
   contents: read
@@ -12,9 +19,34 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Engine guard
+
+      # Friendly skip ONLY if the engine isn't built yet. Once it exists (it does — D2), the engine runs.
+      - name: Detect RSI engine
+        id: engine
         run: |
-          if [ ! -f workflows/rsi.workflow.js ]; then
-            echo "RSI engine not built yet (CP123 cluster E) — exiting green."; exit 0
+          if [ -f workflows/rsi.workflow.js ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "RSI engine not built yet — skipping."
           fi
-          echo "engine present — deterministic half would run here (wired in cluster E)"
+
+      - uses: pnpm/action-setup@v4
+        if: steps.engine.outputs.present == 'true'
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        if: steps.engine.outputs.present == 'true'
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install + build (the engine invokes bin/penny.js → dist/)
+        if: steps.engine.outputs.present == 'true'
+        run: |
+          pnpm install --frozen-lockfile || pnpm install
+          pnpm build
+
+      - name: Run the deterministic RSI engine (6 dsip steps, $0)
+        if: steps.engine.outputs.present == 'true'
+        run: node workflows/rsi.workflow.js --deterministic
