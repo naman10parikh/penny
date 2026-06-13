@@ -79,5 +79,14 @@ jobs:
           pnpm build
       - name: Install the stripe CLI (webhook self-test rig)
         run: bash scripts/install-stripe-cli.sh
-      - name: Acceptance test (penny wire → checkout E2E + raw-body HMAC + idempotent) — RED-BLOCKING
-        run: pnpm test:acceptance
+      - name: "Acceptance test — pass^3 (E5: k>=3 for the flaky-sensitive live-Stripe integration)"
+        # The acceptance suite includes ONE live test-mode Stripe round-trip (assertion 2). Running it
+        # 3× in a row (pass^k, k=3) catches a flaky integration that a single run would miss — all
+        # three must be green for the job to pass. RED-BLOCKING: gates merges. Test mode only.
+        run: |
+          set -e
+          for k in 1 2 3; do
+            echo "::group::acceptance run $k/3 (pass^3)"
+            pnpm test:acceptance
+            echo "::endgroup::"
+          done
