@@ -372,9 +372,13 @@ const server = createServer((req, res) => {
         if (tooBig) return sendJson(res, 413, { error: "prompt too large" });
         let prompt = "";
         try {
-          prompt = String(JSON.parse(body || "{}").prompt ?? "");
+          // Accept any of the three field names the sibling faces use for the same brain-BM25 op:
+          // the cockpit SPA sends {prompt}, the MCP tool uses {question}, the CLI verb is `explain`.
+          // An agent hitting this endpoint by hand with the intuitive {question} now works too.
+          const parsed = JSON.parse(body || "{}");
+          prompt = String(parsed.prompt ?? parsed.question ?? parsed.q ?? "");
         } catch {
-          return sendJson(res, 400, { error: "body must be JSON {prompt}" });
+          return sendJson(res, 400, { error: "body must be JSON {prompt} (or {question})" });
         }
         if (!prompt.trim()) return sendJson(res, 400, { error: "empty prompt" });
         // Ask-the-employee = the keyless A5 brain BM25 (the same engine `penny explain` uses).

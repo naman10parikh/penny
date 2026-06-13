@@ -11,7 +11,8 @@ import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { z } from "zod";
 import { scanPath, type Finding } from "../review/scan.js";
-import { validateSptScope } from "../spt.js";
+import { validateSptScope, parseExpiry } from "../spt.js";
+import { isMeterDeclared, recordMeter } from "../wire/meter-registry.js";
 import { buildWirePlan, renderPlan } from "../wire/router.js";
 import { loadSpec } from "../wire/spec.js";
 import { SHAPE_CONTRACT } from "../cli/check-version.js";
@@ -154,17 +155,26 @@ export function debugTool(args: { symptom: string; context?: string }): {
 export const issueSptSchema = {
   sellerId: z.string().describe("the only seller this token can pay (seller-locked)"),
   capAmount: z.number().describe("total spend cap in the smallest currency unit (e.g. cents); must be > 0"),
-  expiresAt: z.number().describe("absolute expiry as unix-ms; must be in the future"),
+  // ONE input contract with the CLI (`penny issue-spt --expires`): accept unix-ms OR an ISO date
+  // string. An ISO/relative date no longer trips a -32602 before reaching validateSptScope — the two
+  // faces of the on-thesis credential op agree. parseExpiry normalises both to unix-ms.
+  expiresAt: z
+    .union([z.number(), z.string()])
+    .describe("absolute expiry: unix-ms OR an ISO date string; must be in the future"),
   agentId: z.string().describe("the agent the credential is issued to (for the audit trail)"),
 };
 
 export function issueSptTool(args: {
   sellerId: string;
   capAmount: number;
-  expiresAt: number;
+  expiresAt: number | string;
   agentId: string;
 }): { ok: boolean; sptId?: string; auditId?: string; scope?: unknown; reason?: string; note: string } {
-  const v = validateSptScope(args);
+  // Normalise expiry through the SAME parser the CLI uses, so ISO + unix-ms mean the same thing on
+  // both faces. An unparseable value resolves to undefined → validateSptScope refuses it with the
+  // brain-cited O-11 reason (a soft, taste-layer refusal), NOT a hard JSON-RPC -32602.
+  const expiresAt = parseExpiry(args.expiresAt);
+  const v = validateSptScope({ ...args, expiresAt });
   if (!v.ok) {
     return {
       ok: false,
@@ -172,12 +182,13 @@ export function issueSptTool(args: {
       note: "SPT refused — least-agency scope not satisfied. An unbounded credential is exactly the blast radius O-11 forbids.",
     };
   }
+  const { scope } = v;
   // Test-mode placeholder id — penny never moves real money; live SPT issuance is behind the
-  // chairman checklist + the agentic-commerce feature flag (S2).
-  const sptId = `spt_test_${args.sellerId}_${args.expiresAt}`;
+  // chairman checklist + the agentic-commerce feature flag (S2). Use the validated scope (unix-ms).
+  const sptId = `spt_test_${scope.sellerId}_${scope.expiresAt}`;
   const auditId = appendAudit({
     action: "issue-spt",
-    detail: { sellerId: args.sellerId, capAmount: args.capAmount, expiresAt: args.expiresAt, agentId: args.agentId, sptId },
+    detail: { sellerId: scope.sellerId, capAmount: scope.capAmount, expiresAt: scope.expiresAt, agentId: scope.agentId, sptId },
     brainRef: "O-11 / S-13",
   });
   return {
@@ -228,10 +239,11 @@ export function reconcileTool(args: { since: string; network?: boolean }): {
 
 // ---------------------------------------------------------------------------
 // penny_meter_create — create a Meter "named like a public API"; refuse a re-create
-// or a bad aggregation. Meters are near-immutable (O-07/P-10).
+// or a bad aggregation. Meters are near-immutable (O-07/P-10). The re-create refusal is
+// backed by the SAME on-disk registry the CLI uses (logs/declared-meters.json) — so the two
+// faces agree AND the guard survives across processes (no per-process in-memory Set).
 // ---------------------------------------------------------------------------
 const VALID_AGG = ["sum", "count", "last"] as const;
-const declaredMeters = new Set<string>();
 
 export const meterCreateSchema = {
   name: z.string().describe("event_name (≤100 chars; treat like a public API — near-permanent)"),
@@ -253,13 +265,13 @@ export function meterCreateTool(args: { name: string; aggregation: string; unit:
       reason: `--agg must be one of ${VALID_AGG.join(" | ")} (got "${args.aggregation}"). Wrong aggregation = new meter + a subscription migration. [O-07/P-10]`,
     };
   }
-  if (declaredMeters.has(args.name)) {
+  if (isMeterDeclared(args.name)) {
     return {
       ok: false,
       reason: `meter "${args.name}" already declared. Meters are near-immutable — re-creating forces a new meter + a subscription migration. REFUSED. [O-07/P-10]`,
     };
   }
-  declaredMeters.add(args.name);
+  recordMeter({ name: args.name, aggregation: args.aggregation, unit: args.unit });
   return { ok: true, meter: { name: args.name, aggregation: args.aggregation, unit: args.unit } };
 }
 

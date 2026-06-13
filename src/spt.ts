@@ -20,6 +20,22 @@ export type SptValidation =
   | { readonly ok: false; readonly reason: string };
 
 /**
+ * Parse an `--expires` / `expiresAt` value into a unix-ms number. Accepts either a unix-ms number
+ * (or its string form) or an ISO date string. Returns `undefined` if it parses to neither — the
+ * ONE input contract both faces (CLI + MCP) share, so an ISO date and a unix-ms timestamp mean the
+ * same thing whether you reach penny through `penny issue-spt` or the `penny_issue_spt` MCP tool.
+ */
+export function parseExpiry(raw: string | number): number | undefined {
+  if (typeof raw === "number") return Number.isFinite(raw) ? raw : undefined;
+  const trimmed = raw.trim();
+  if (trimmed === "") return undefined;
+  const asNum = Number(trimmed);
+  if (Number.isFinite(asNum)) return asNum;
+  const asDate = Date.parse(trimmed);
+  return Number.isNaN(asDate) ? undefined : asDate;
+}
+
+/**
  * Validate an SPT scope. Refuses anything unbounded — an uncapped, non-expiring, or
  * seller-unlocked token is exactly the "unbounded blast radius" O-11 forbids.
  */

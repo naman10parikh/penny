@@ -7,13 +7,10 @@
 import { Command } from "commander";
 import chalk from "chalk";
 import { validateMeterEventTimestamp, type BillingPeriod } from "../wire/meter-event.js";
+import { isMeterDeclared, recordMeter } from "../wire/meter-registry.js";
 
 const VALID_AGGREGATIONS = ["sum", "count", "last"] as const;
 type Aggregation = (typeof VALID_AGGREGATIONS)[number];
-
-/** In-repo registry of meters penny has been asked to create this process, to enforce the
- *  immutability guard locally (the real guard also queries Stripe before creating). */
-const declaredMeters = new Set<string>();
 
 export function registerMeter(program: Command): void {
   const meter = program.command("meter").description("manage Stripe Meters (near-immutable — name like a public API)");
@@ -44,8 +41,11 @@ export function registerMeter(program: Command): void {
         process.exit(1);
       }
 
-      // Guard 3: immutability refusal — never re-create an existing meter.
-      if (declaredMeters.has(name)) {
+      // Guard 3: immutability refusal — never re-create an existing meter. Backed by an on-disk
+      // registry (logs/declared-meters.json) so the refusal SURVIVES across CLI processes and matches
+      // the long-lived MCP server's refusal — the two faces of the meter contract agree. (Production
+      // also queries Stripe before creating; this is the $0/test-mode mirror of that existence check.)
+      if (isMeterDeclared(name)) {
         process.stderr.write(
           chalk.red(
             `penny meter create: meter "${name}" already declared. Meters are near-immutable — ` +
@@ -55,7 +55,7 @@ export function registerMeter(program: Command): void {
         );
         process.exit(1);
       }
-      declaredMeters.add(name);
+      recordMeter({ name, aggregation: opts.agg, unit: opts.unit });
 
       process.stdout.write(
         chalk.yellow(`penny meter create (test mode)\n`) +

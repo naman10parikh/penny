@@ -7,16 +7,8 @@
 
 import { Command } from "commander";
 import chalk from "chalk";
-import { validateSptScope } from "../spt.js";
+import { validateSptScope, parseExpiry } from "../spt.js";
 import { appendAudit } from "../mcp/audit.js";
-
-/** Parse an --expires value: either a unix-ms number or an ISO date string. */
-function parseExpiry(raw: string): number | undefined {
-  const asNum = Number(raw);
-  if (Number.isFinite(asNum) && raw.trim() !== "") return asNum;
-  const asDate = Date.parse(raw);
-  return Number.isNaN(asDate) ? undefined : asDate;
-}
 
 export function registerIssueSpt(program: Command): void {
   program

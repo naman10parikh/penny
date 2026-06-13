@@ -140,6 +140,27 @@ extract_context() {
   local best_line=0
   local best_score=0
 
+  # Does the query itself ask about the eval pyramid / wiring? If not, demote those index/footer
+  # lines so an on-point scenario body wins the snippet (a user asking "double charge on retries"
+  # should see the S-02/P-02 war story, not the "How these wire into the eval pyramid" boilerplate).
+  local query_is_meta=false
+  if echo "$QUERY" | grep -qiE 'eval pyramid|dsip|L1|L2|L3|how these wire'; then
+    query_is_meta=true
+  fi
+
+  # Candidate lines = any line matching ANY query term (not just the first). This lets a scenario
+  # body that contains "double"/"charging"/"retries" win the snippet even when the leading word is a
+  # stopword ("how"/"do"/"on") that only appears in index prose. Build one alternation pattern.
+  local term_pattern=""
+  for term in "${TERMS[@]}"; do
+    # Escape regex metacharacters so a term like "200 OK" or "req.text()" is matched literally.
+    local esc
+    esc=$(printf '%s' "$term" | sed 's/[][\\.*^$(){}+?|]/\\&/g')
+    [ -z "$esc" ] && continue
+    if [ -z "$term_pattern" ]; then term_pattern="$esc"; else term_pattern="$term_pattern|$esc"; fi
+  done
+  [ -z "$term_pattern" ] && term_pattern="${TERMS[0]}"
+
   while IFS= read -r line_data; do
     local line_num="${line_data%%:*}"
     local line_content="${line_data#*:}"
@@ -151,11 +172,19 @@ extract_context() {
       fi
     done
 
+    # Demote index/footer boilerplate (the eval-pyramid wiring section + its "**L1 (… ):**" index
+    # rows, which densely reference scenario IDs and term-match strongly without being the answer).
+    # Skip the demotion if the user is actually asking about the pyramid.
+    if [ "$query_is_meta" = false ] &&
+       echo "$line_content" | grep -qiE 'how these wire into the eval pyramid|\*\*L[123] \(|wire into the eval'; then
+      line_score=0
+    fi
+
     if [ "$line_score" -gt "$best_score" ]; then
       best_score=$line_score
       best_line=$line_num
     fi
-  done < <(grep -ni "${TERMS[0]}" "$file" 2>/dev/null | head -20)
+  done < <(grep -niE "$term_pattern" "$file" 2>/dev/null | head -40)
 
   if [ "$best_line" -gt 0 ]; then
     local start=$((best_line - context_lines))
