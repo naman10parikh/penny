@@ -77,8 +77,7 @@ export async function judgeLlm(task: string, candidate: string): Promise<Label> 
     messages: [{ role: "user", content: user }],
   });
   const text = res.content
-    .filter((b): b is { type: "text"; text: string } => b.type === "text")
-    .map((b) => b.text)
+    .map((b) => (b.type === "text" ? b.text : ""))
     .join(" ")
     .toUpperCase();
   return text.includes("PASS") && !text.includes("FAIL") ? "pass" : "fail";
