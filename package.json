@@ -5,7 +5,8 @@
   "type": "module",
   "license": "MIT",
   "bin": {
-    "penny": "./bin/penny.js"
+    "penny": "./bin/penny.js",
+    "penny-mcp": "./dist/mcp/server.js"
   },
   "main": "./dist/cli/index.js",
   "types": "./dist/cli/index.d.ts",
@@ -25,6 +26,8 @@
     "test": "vitest run",
     "eval": "tsx eval/run.ts",
     "test:acceptance": "vitest run test/acceptance",
+    "mcp": "node dist/mcp/server.js",
+    "rsi": "node workflows/rsi.workflow.js --deterministic",
     "lint": "tsc --noEmit"
   },
   "keywords": [
@@ -38,6 +41,7 @@
     "energy"
   ],
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@stripe/agent-toolkit": "^0.7.0",
     "chalk": "^5.3.0",
     "commander": "^12.1.0",
