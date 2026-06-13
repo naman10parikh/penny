@@ -1,0 +1,71 @@
+{
+  "protocolVersion": "1.0",
+  "name": "penny",
+  "description": "The Energy fleet's payments / billing domain-expert employee. Wires correct Stripe test-mode billing into a product (checkout E2E + raw-body HMAC webhook + idempotent replay), reviews an existing integration against 21 known pitfalls, debugs a live billing incident against the ledger-is-truth law (JTBD-0: never infer money-state from a transport status), and issues scoped/capped/expiring agent-spend credentials. Boundary: product billing only — earning loops stay with helios. Pinned Stripe API version 2026-05-27.dahlia; test mode is the default. Powered by Energy.",
+  "version": "0.1.0",
+  "provider": {
+    "organization": "Energy",
+    "url": "https://github.com/naman10parikh/penny"
+  },
+  "documentationUrl": "https://github.com/naman10parikh/penny/blob/main/AGENTS.md",
+  "endpoint": "stdio:node dist/mcp/server.js",
+  "transports": [
+    { "type": "mcp", "command": "node", "args": ["dist/mcp/server.js"], "transport": "stdio", "note": "penny's OWN MCP server (penny-mcp) — default transport; the 8 penny tools" },
+    { "type": "http", "url": "http://localhost:7791", "note": "documented dual-mode: a hosted-OAuth variant serving the same 8 tools (deferred)" }
+  ],
+  "capabilities": ["wire", "review", "debug", "issue-spt", "reconcile", "meter-create", "check-version", "explain"],
+  "defaultInputModes": ["text/plain", "application/json"],
+  "defaultOutputModes": ["text/plain", "application/json"],
+  "skills": [
+    {
+      "id": "penny_wire",
+      "name": "Wire Stripe test-mode billing into a product",
+      "description": "THE acceptance test: scaffold a product + recurring + metered price + a current-Dahlia Checkout Session + a raw-body webhook handler into a target, then prove checkout completes E2E (re-fetch the canonical Session, not the redirect payload), the webhook is signature-verified over raw bytes, and replaying the same event is a no-op (idempotent). Test mode only. Maps to `penny wire`. (S-02/S-03/Corollary A.)",
+      "tags": ["payments", "stripe", "checkout", "webhook", "idempotency"],
+      "examples": [
+        "Wire Stripe billing into this SaaS product spec and prove checkout + webhook + idempotent replay.",
+        "Scaffold a test-mode subscription with a metered price into /tmp/myapp."
+      ]
+    },
+    {
+      "id": "penny_review_integration",
+      "name": "Review a billing integration against the 21 pitfalls",
+      "description": "Audit a checkout/webhook/subscription/metered/tax integration for the silent-failure class: raw-body HMAC footgun (P-04), dedup-after-side-effect (P-02), dead createUsageRecord (P-08), status==='active' entitlement (P-14), multi-currency tax flip (P-15), SDK-not-contract-test (P-16). Findings keyed by P-/S-ID with file:line + fix + brain ref. Maps to `penny review`. (JTBD-0.)",
+      "tags": ["payments", "stripe", "audit", "pitfall", "anti-pattern"],
+      "examples": [
+        "Review my Stripe webhook handler for the raw-body bug.",
+        "Audit this checkout integration before I ship it."
+      ]
+    },
+    {
+      "id": "penny_debug",
+      "name": "Root-cause a live billing incident",
+      "description": "Take a symptom ('every webhook 400s', 'customers charged twice', 'Invalid Date / NaN charges', 'users keep access after payment fails', 'a 500 but the customer was charged') and map it to the silent-failure class + the brain ref that explains it + the fix — without inferring money-state from a transport status. Maps to `penny debug`. (JTBD-0.)",
+      "tags": ["payments", "stripe", "incident", "root-cause"],
+      "examples": [
+        "Every Stripe webhook is returning 400 — what's wrong?",
+        "Customers are being charged twice on retry; root-cause it."
+      ]
+    },
+    {
+      "id": "penny_issue_spt",
+      "name": "Issue a scoped agent-spend credential",
+      "description": "Issue a scoped/capped/expiring Shared Payment Token so an agent can pay without ever seeing the card — seller-locked, amount-capped, time-bounded, least-agency for money. Fuses with helios's balance-cap (import, never rebuild). Test mode; writes an append-only audit line. Maps to `penny issue-spt`. (S-13/O-11.)",
+      "tags": ["payments", "agent-spend", "spt", "least-agency"],
+      "examples": [
+        "Issue a $50 spend token for agent X scoped to seller acme that expires in 1 hour.",
+        "Give my agent a capped, expiring payment credential it can use but not exfiltrate."
+      ]
+    },
+    {
+      "id": "penny_explain",
+      "name": "Ask / explain the payments brain",
+      "description": "BM25 ranked search over penny's expertise brain (pitfalls P-, scenarios S-, opinions O-, JTBD laws) → a cited answer; or explain any ID with its detection + fix. The human-facing and agent-facing front door to penny's expertise. Maps to `penny explain` / `penny check-version`. (Memory layer over brain/.)",
+      "tags": ["payments", "knowledge", "search", "stripe"],
+      "examples": [
+        "What does penny think about webhooks vs polling for entitlement state?",
+        "Explain P-04. How do I avoid the raw-body HMAC footgun?"
+      ]
+    }
+  ]
+}

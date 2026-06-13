@@ -1,0 +1,27 @@
+{
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
+  "name": "penny",
+  "version": "0.1.0",
+  "description": "The Energy fleet's payments/billing employee — wires Stripe test-mode billing (checkout E2E + raw-body HMAC webhook + idempotent replay), reviews against 21 known pitfalls, debugs live incidents via the ledger-is-truth law, issues scoped agent-spend credentials. Product billing only — earning loops stay with helios. Powered by Energy.",
+  "author": {
+    "name": "Energy Platform",
+    "email": "[removed]"
+  },
+  "homepage": "https://github.com/naman10parikh/penny/blob/main/AGENTS.md",
+  "repository": "https://github.com/naman10parikh/penny",
+  "license": "MIT",
+  "keywords": ["claude-code", "payments", "billing", "stripe", "checkout", "webhook", "idempotency", "agent-spend", "harness", "energy"],
+  "skills": [
+    "./skills/stripe-webhook-correctness",
+    "./skills/subscription-proration",
+    "./skills/metered-billing",
+    "./skills/agent-spend-credential",
+    "./skills/stripe-version-migration"
+  ],
+  "agents": [
+    "./.claude/agents/billing-reviewer.md",
+    "./.claude/agents/payment-debugger.md"
+  ],
+  "hooks": "./.claude/settings.json",
+  "mcpServers": "./.mcp.json"
+}

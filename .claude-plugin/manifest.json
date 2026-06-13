@@ -1,0 +1,67 @@
+{
+  "schema_version": "1.0",
+  "name": "penny",
+  "display_name": "penny — Payments / Billing Employee",
+  "description": "The Energy fleet's payments-billing domain-expert employee. Wires correct Stripe test-mode billing into a product (checkout E2E + raw-body HMAC webhook + idempotent replay), reviews an integration against 21 known pitfalls, debugs a live incident against the ledger-is-truth law (JTBD-0: never infer money-state from a transport status), and issues scoped/capped/expiring agent-spend credentials. Boundary: product billing only — earning loops stay with helios. Pinned Stripe API version 2026-05-27.dahlia; test mode default.",
+  "version": "0.1.0",
+  "author": "Energy Platform",
+  "license": "MIT",
+  "repository": "https://github.com/naman10parikh/penny",
+  "keywords": ["claude-code", "payments", "billing", "stripe", "checkout", "webhook", "idempotency", "metered", "agent-spend", "harness", "energy"],
+  "mcp_servers": [
+    {
+      "name": "penny",
+      "description": "penny's OWN payments tools over JSON-RPC — penny_wire / penny_review_integration / penny_debug / penny_issue_spt / penny_reconcile / penny_meter_create / penny_check_version / penny_explain. The taste/correctness layer over Stripe (NOT a raw @stripe/mcp passthrough — penny lists @stripe/mcp for raw ops, it does not merely wrap it). Default transport stdio; a hosted-OAuth dual-mode serving the same 8 tools is documented-deferred.",
+      "transport": "stdio",
+      "command": "node",
+      "args": ["dist/mcp/server.js"],
+      "env": {}
+    }
+  ],
+  "cli": {
+    "binary": "penny",
+    "entrypoint": "./bin/penny.js",
+    "commands": [
+      { "name": "wire", "description": "THE acceptance test: scaffold Stripe test-mode billing into a target -> checkout E2E + raw-body HMAC webhook + idempotent replay; re-fetches the canonical Session (Corollary A). --dry-run prints the scaffold->verify->self-test step plan (S-02/S-03)", "usage": "penny wire --product <spec> [--target <dir>] [--dry-run]" },
+      { "name": "review", "description": "audit a billing integration against the 21 KNOWN-PITFALLS -> findings (pitfall id . file:line . severity . fix . brainRef); exit non-zero when findings exist (P-04/P-08/P-14/P-15/P-16...)", "usage": "penny review <path>" },
+      { "name": "debug", "description": "root-cause a live billing incident via JTBD-0 (symptom -> silent-failure class -> brain ref -> fix); never infers money-state from a transport status", "usage": "penny debug <symptom>" },
+      { "name": "issue-spt", "description": "issue a scoped/capped/expiring Shared Payment Token (the agent never sees the card); fuses with helios's balance-cap; test mode; writes an audit line (S-13/O-11)", "usage": "penny issue-spt --seller <id> --cap <amt> --expires <ts> [--agent <id>]" },
+      { "name": "reconcile", "description": "diff the internal usage/entitlement ledger vs Stripe (meter-event-summary / canonical objects); alarm on divergence; --no-network degrades to 'unknown, reconciling' (S-09/O-09)", "usage": "penny reconcile --since <ts> [--no-network]" },
+      { "name": "webhook", "description": "webhook self-test rig: wrap `stripe listen --forward-to` + raw-body HMAC self-test (S-01/S-02/S-03)", "usage": "penny webhook listen" },
+      { "name": "meter", "description": "create a near-immutable Stripe Meter ('name it like a public API'); refuses re-create + bad aggregation (O-07/P-10)", "usage": "penny meter create <name> --agg <sum|count|last> --unit <u>" },
+      { "name": "check-version", "description": "contract-test the pinned Stripe API-version shape your code reads ($0, no live API) — the headline L1 contract test (S-17/O-16)", "usage": "penny check-version [--api-version <v>]" },
+      { "name": "explain", "description": "ask the payments employee: BM25 over brain/ -> cited answer (the Memory layer; the cockpit shares this verb)", "usage": "penny explain <topic>" },
+      { "name": "runs-view", "description": "aggregate the per-run log + the money-action audit trail (observability)", "usage": "penny runs-view [--json]" }
+    ]
+  },
+  "capabilities": {
+    "tools": [
+      { "name": "penny_wire", "description": "THE acceptance test over MCP: scaffold Stripe test-mode billing into a target -> checkout E2E + raw-body HMAC webhook + idempotent replay. Maps to `penny wire`.", "when_to_use": "When you want correct Stripe billing wired into a product spec with the silent-failure class designed out (raw-body HMAC, same-transaction idempotency, canonical re-fetch)." },
+      { "name": "penny_review_integration", "description": "Audit a billing integration against the 21 KNOWN-PITFALLS; findings keyed by P-/S-ID with file:line + fix + brain ref. Maps to `penny review`.", "when_to_use": "When you need to check a checkout/webhook/subscription/metered/tax integration for the silent-failure class before shipping." },
+      { "name": "penny_debug", "description": "Root-cause a live billing incident via JTBD-0 (symptom -> silent-failure class -> brain ref -> fix), without inferring money-state from a status code. Maps to `penny debug`.", "when_to_use": "DURING a billing incident — 'every webhook 400s', 'charged twice', 'NaN charges', 'access after payment fails', '500 but charged'." },
+      { "name": "penny_issue_spt", "description": "Issue a scoped/capped/expiring Shared Payment Token (seller-locked, amount-capped, time-bounded; least-agency for money); fuses with helios's balance-cap; test mode + audit line. Maps to `penny issue-spt`.", "when_to_use": "When an agent needs to pay without ever seeing or being able to exfiltrate the card credential." },
+      { "name": "penny_reconcile", "description": "Diff the internal ledger vs Stripe; alarm on divergence; degrades to 'unknown, reconciling' under no-network. Maps to `penny reconcile`.", "when_to_use": "When you need to confirm money-state against the ledger (the truth) rather than trust a transport status." },
+      { "name": "penny_meter_create", "description": "Create a near-immutable Stripe Meter or refuse on re-create / bad aggregation. Maps to `penny meter create`.", "when_to_use": "When standing up usage/metered billing — Meters are mandatory and near-immutable; name them like a public API." },
+      { "name": "penny_check_version", "description": "Contract-test the pinned Stripe API-version shape the code reads ($0). Maps to `penny check-version`.", "when_to_use": "When you want to catch the undefined-field/NaN trap from an API-version bump before it silently breaks charge math (the headline L1)." },
+      { "name": "penny_explain", "description": "BM25 ranked search over penny's expertise brain (P-/S-/O-/JTBD) -> a cited answer; or explain any ID with detection + fix. Maps to `penny explain`.", "when_to_use": "When you need penny's stance on a payments question (webhooks vs polling, SPT vs x402, proration edge cases) or the canonical detection+fix for a pitfall id." }
+    ]
+  },
+  "skills": [
+    "skills/stripe-webhook-correctness/SKILL.md",
+    "skills/subscription-proration/SKILL.md",
+    "skills/metered-billing/SKILL.md",
+    "skills/agent-spend-credential/SKILL.md",
+    "skills/stripe-version-migration/SKILL.md"
+  ],
+  "subAgents": [
+    ".claude/agents/billing-reviewer.md",
+    ".claude/agents/payment-debugger.md"
+  ],
+  "hooks": [
+    "hooks/pretooluse-billing-guard.sh",
+    "hooks/sessionstart-brain-law.sh"
+  ],
+  "settings": ".claude/settings.json",
+  "brain": "brain/MOC - penny.md",
+  "install_instructions": "1. Build the package: pnpm install && pnpm build\n2. Add this plugin to Claude Code: Settings -> Plugins -> Add local plugin -> select this directory (or `claude plugin install penny`).\n3. The penny CLI (11 commands), penny's OWN MCP server (8 tools), the 5 skills (stripe-webhook-correctness / subscription-proration / metered-billing / agent-spend-credential / stripe-version-migration), the 2 hooks (PreToolUse dead-API/raw-body guard + SessionStart brain-LAW inject), and the 2 sub-agent personas (billing-reviewer + payment-debugger) are now available. Boundary: product billing only — earning loops stay with helios. Test mode is the default; sk_live only behind the chairman checklist."
+}
