@@ -45,7 +45,7 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-      - name: Install + build + test (red-blocking once code exists)
+      - name: Install + build + test (red-blocking — Vitest + eval pyramid)
         if: steps.rt.outputs.armed == 'true'
         run: |
           pnpm install --frozen-lockfile || pnpm install
@@ -54,3 +54,30 @@ jobs:
       - name: Skeleton phase
         if: steps.rt.outputs.armed == 'false'
         run: echo "skeleton phase — build gate auto-arms when package.json lands (CP123 Wave B)"
+
+  # E4 · THE ACCEPTANCE TEST — the spine (PLAN §5). RED-BLOCKING: gates merges. Runs `penny wire` +
+  # the 5 assertions (scaffold · checkout E2E re-fetch · raw-body HMAC · idempotent replay · mode+tax
+  # pin) entirely in Stripe TEST MODE — no sk_live ever. The live re-fetch assertion uses the
+  # STRIPE_SECRET_KEY (sk_test) gh secret; the rest are hermetic.
+  acceptance:
+    runs-on: ubuntu-latest
+    env:
+      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+      STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install + build
+        run: |
+          pnpm install --frozen-lockfile || pnpm install
+          pnpm build
+      - name: Install the stripe CLI (webhook self-test rig)
+        run: bash scripts/install-stripe-cli.sh
+      - name: Acceptance test (penny wire → checkout E2E + raw-body HMAC + idempotent) — RED-BLOCKING
+        run: pnpm test:acceptance
