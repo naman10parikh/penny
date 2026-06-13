@@ -8,6 +8,7 @@
 import { Command } from "commander";
 import chalk from "chalk";
 import { validateSptScope } from "../spt.js";
+import { appendAudit } from "../mcp/audit.js";
 
 /** Parse an --expires value: either a unix-ms number or an ISO date string. */
 function parseExpiry(raw: string): number | undefined {
@@ -45,9 +46,22 @@ export function registerIssueSpt(program: Command): void {
       }
 
       const { scope } = v;
-      // NOTE: this is the validated SCOPE. The live Stripe test-mode SPT call + the helios
-      // balance-cap fusion + the append-only audit line are wired by the agent-spend skill /
-      // the MCP tool (C1); here penny proves the scope is least-agency before anything issues.
+      // This is the validated least-agency SCOPE. Even though the live Stripe test-mode SPT call +
+      // the helios balance-cap fusion happen via the agent-spend skill / MCP tool (C1), issuing a
+      // scoped spend credential IS a money-relevant action — so penny writes an append-only audit
+      // line HERE (E6 / §10: issue-SPT writes the ledger-is-truth trail). The cap is never logged in
+      // a way that exposes a secret; only the bounded scope is recorded.
+      const auditId = appendAudit({
+        action: "issue-spt",
+        brainRef: "O-11 / S-13",
+        detail: {
+          sellerId: scope.sellerId,
+          capAmount: scope.capAmount,
+          expiresAt: new Date(scope.expiresAt).toISOString(),
+          agentId: scope.agentId,
+          mode: "test",
+        },
+      });
       process.stdout.write(
         chalk.yellow(`penny issue-spt (TEST MODE — penny never moves real money)\n`) +
           `  seller-locked : ${scope.sellerId}\n` +
@@ -55,6 +69,7 @@ export function registerIssueSpt(program: Command): void {
           `  time-expiring : ${new Date(scope.expiresAt).toISOString()}\n` +
           `  for agent     : ${scope.agentId}\n` +
           chalk.dim(`  fuse: gate spend on helios's balance cap (funding/state.ts) — consume it, do NOT rebuild it. [O-11]\n`) +
+          chalk.dim(`  audit: money-action line written → logs/audit.jsonl (id ${auditId.slice(0, 8)}). [JTBD-0]\n`) +
           chalk.green(`\nScope validated as least-agency. (Issue via the agent-spend skill / penny_issue_spt MCP tool.)\n`),
       );
       process.exit(0);

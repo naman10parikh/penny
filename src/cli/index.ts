@@ -19,6 +19,8 @@ import { registerIssueSpt } from "./issue-spt.js";
 import { registerReconcile } from "./reconcile.js";
 import { registerWire } from "../wire/command.js";
 import { registerReview } from "../review/command.js";
+import { registerRunsView } from "../obs/runs-view.js";
+import { logRun } from "../obs/log-run.js";
 
 export function buildProgram(): Command {
   const program = new Command();
@@ -43,11 +45,23 @@ export function buildProgram(): Command {
   registerMeter(program); // create a Meter "named like a public API"; refuse re-create
   registerCheckVersion(program); // contract-test the pinned API version shape ($0)
   registerExplain(program); // ask-the-employee: query the brain (BM25) → cited answer
+  registerRunsView(program); // observability: aggregate logs/runs.jsonl + the money-action trail
 
   return program;
 }
 
 export async function main(argv: string[]): Promise<void> {
+  // E6 · Observability — append ONE run line per invocation (logs/runs.jsonl), even on early
+  // process.exit() inside an action handler. Capturing on the 'exit' event is the only way to log
+  // the FINAL exit code for commander commands that exit themselves. runs-view itself is excluded
+  // (reading the log shouldn't append a noisy self-row). Best-effort; never breaks the command.
+  const startedAt = Date.now();
+  const command = argv[2] && !argv[2].startsWith("-") ? argv[2] : "(root)";
+  if (command !== "runs-view") {
+    process.on("exit", (code) => {
+      logRun({ command, durationMs: Date.now() - startedAt, exitCode: code });
+    });
+  }
   const program = buildProgram();
   await program.parseAsync(argv);
 }
