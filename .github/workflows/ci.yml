@@ -90,3 +90,32 @@ jobs:
             pnpm test:acceptance
             echo "::endgroup::"
           done
+
+  # G2 · COCKPIT E2E — the one Playwright suite (penny is CLI/MCP-first; the cockpit is the single
+  # browser surface, PLAN §9/§10). RED-BLOCKING: boots the stdlib cockpit + screenshots the 5 views
+  # and asserts they render LIVE data (brain · run-log money-trail · eval pyramid + WIRED acceptance
+  # badge · ask · gaps). No secrets — the cockpit reads only what penny DID (the Ask box is keyless).
+  cockpit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install
+        run: pnpm install --frozen-lockfile || pnpm install
+      - name: Install Playwright chromium (with OS deps)
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Cockpit E2E (red-blocking — 5 views screenshotted + asserted)
+        run: pnpm test:cockpit
+      - name: Upload cockpit screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cockpit-screenshots
+          path: content/screenshots/cockpit/
+          if-no-files-found: ignore
