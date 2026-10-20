@@ -3,7 +3,7 @@
 // counts runs/failures and surfaces the money trail (the data the cockpit Run-log view reads).
 
 import { describe, it, expect, beforeEach, afterAll } from "vitest";
-import { readFileSync, existsSync, rmSync, mkdtempSync } from "node:fs";
+import { readFileSync, rmSync, mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { logRun, runsLogPath, type RunLine } from "../src/obs/log-run.js";
@@ -16,13 +16,16 @@ import { aggregate } from "../src/obs/runs-view.js";
 
 describe("E6 · observability run-log", () => {
   it("logRun appends a parseable line to logs/runs.jsonl with command + exit code + duration", () => {
-    const before = existsSync(runsLogPath())
-      ? readFileSync(runsLogPath(), "utf8").split("\n").filter(Boolean).length
-      : 0;
-    logRun({ command: "__test-cmd__", durationMs: 7, exitCode: 0, note: "unit" });
-    const lines = readFileSync(runsLogPath(), "utf8").split("\n").filter(Boolean);
-    expect(lines.length).toBe(before + 1);
-    const last = JSON.parse(lines[lines.length - 1]) as RunLine;
+    // A unique note finds this run's line: other test files may append to the same log at the same time.
+    const note = `unit-${process.pid}-${Date.now()}`;
+    logRun({ command: "__test-cmd__", durationMs: 7, exitCode: 0, note });
+    const mine = readFileSync(runsLogPath(), "utf8")
+      .split("\n")
+      .filter(Boolean)
+      .map((l) => JSON.parse(l) as RunLine)
+      .filter((l) => l.note === note);
+    expect(mine).toHaveLength(1);
+    const last = mine[0]!;
     expect(last.command).toBe("__test-cmd__");
     expect(last.exitCode).toBe(0);
     expect(last.durationMs).toBe(7);
