@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: If you use this software, please cite it as below.
+title: "Penny: Payments and billing wired correctly, for products and their agents."
+type: software
+authors:
+  - family-names: Parikh
+    given-names: Naman
+repository-code: "https://github.com/naman10parikh/penny"
+license: MIT
+version: "0.1.0"
+abstract: "Payments and billing wired correctly, for products and their agents."
+keywords: ["agent-native", "payments", "stripe", "billing"]
