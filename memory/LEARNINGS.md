@@ -19,3 +19,6 @@ Every error → root cause → rule. Auto-compressed when >500 lines (memory-com
   company. Run `node ~/darwin/bin/darwin-check.mjs dsip.json` after any edit.
 - **A proposal that dies with the runner is not a proposal.** The nightly loop wrote `.rsi/proposed/` on the
   runner and lost it. Rule: upload it as an artifact for a person to review.
+- **The sub-agents' tool limits were never applied.** Both agents set `allowed-tools`, a skill field that
+  sub-agents ignore, so each inherited every tool. Rule: a sub-agent restricts tools with `tools:` (a
+  comma-separated string or a YAML list).

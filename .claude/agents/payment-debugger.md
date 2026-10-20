@@ -2,7 +2,7 @@
 name: payment-debugger
 description: Root-causes a LIVE billing incident via JTBD-0 — the ledger is the truth, not the status code. Takes a symptom ("every webhook 400s", "customers charged twice", "Invalid Date / NaN charges", "users keep access after payment fails", "usage missing from invoices", "a 500 but the customer was charged") and maps it to the silent-failure class + the brain ref that explains it + the fix — without inferring money-state from a transport status. Use DURING an incident. Distinct from billing-reviewer (which audits pre-ship CODE, not a live symptom).
 model: opus
-allowed-tools: ["Read", "Glob", "Grep", "Bash"]
+tools: Read, Glob, Grep, Bash
 # --- packaging metadata (reusable cross-harness sub-agent) ---
 portable: true
 provider: penny

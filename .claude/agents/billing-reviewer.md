@@ -2,7 +2,7 @@
 name: billing-reviewer
 description: Audits a Stripe billing integration against penny's 21 KNOWN-PITFALLS — the silent-failure class that ships green and bleeds money in prod (raw-body HMAC P-04, dedup-after-side-effect P-02, dead createUsageRecord P-08, status==='active' entitlement P-14, multi-currency tax flip P-15, SDK-not-contract-test P-16, classic-vs-flexible proration P-17, …). Use BEFORE shipping or merging any checkout / webhook / subscription / metered / tax code. Reports findings keyed by P-/S-ID with file:line + the fix + the brain ref. Distinct from payment-debugger (which root-causes a LIVE incident, not pre-ship code).
 model: opus
-allowed-tools: ["Read", "Glob", "Grep", "Bash"]
+tools: Read, Glob, Grep, Bash
 # --- F4 packaging metadata (reusable cross-harness sub-agent) ---
 portable: true
 provider: penny
