@@ -1,7 +1,8 @@
-// `penny reconcile --since <ts>` — diff the internal usage/entitlement ledger against Stripe
-// (meter-event-summary / canonical objects) and alarm on divergence (S-09 / O-09). The whole
-// point is JTBD-0: never assert money-moved from a transport status — reconcile against the
-// ledger, and when the provider is unreachable, say "unknown, reconciling" rather than guess.
+// `penny reconcile --since <ts>` — explain the diff of the internal usage/entitlement ledger
+// against Stripe (meter-event-summary / canonical objects) (S-09 / O-09). This version does not
+// call Stripe, so it diffs nothing and says so. The whole point is JTBD-0: never assert
+// money-moved from a transport status, and when the provider is unreachable, say "unknown,
+// reconciling" rather than guess.
 
 import { Command } from "commander";
 import chalk from "chalk";
@@ -15,7 +16,7 @@ export function registerReconcile(program: Command): void {
     // is to honestly report "unknown, reconciling" (JTBD-0). So `--since` is an ordinary option here
     // and is enforced only on the live path below, NOT as a global requiredOption (which would reject
     // `penny reconcile --no-network` — the most important command to be able to run when Stripe is down).
-    .description("diff internal ledger vs Stripe (meter-event-summary / canonical objects); alarm on divergence")
+    .description("explain the internal ledger vs Stripe diff (this version does not call Stripe or diff anything)")
     .option("--since <ts>", "reconcile from this point: unix-ms or ISO date (required for a live reconcile)")
     .option("--no-network", "simulate Stripe unreachable — must degrade to 'unknown, reconciling', never assert")
     .action((opts: { since?: string; network: boolean }) => {
@@ -50,9 +51,9 @@ export function registerReconcile(program: Command): void {
 
       process.stdout.write(
         chalk.dim(
-          "  (live reconcile diffs the internal usage ledger vs meter-event-summary and re-fetches\n" +
-            "   canonical objects; it alarms on divergence and respects the 100 rp/s limit — O-09.)\n",
-        ) + chalk.green("\nNo divergence asserted without the ledger. Wire the live diff via the reconcile path.\n"),
+          "  (a live reconcile would diff the internal usage ledger vs meter-event-summary and re-fetch\n" +
+            "   canonical objects; it would alarm on divergence and respect the 100 rp/s limit. O-09.)\n",
+        ) + chalk.bold("\nThis version does not call Stripe, so nothing was reconciled and no divergence was checked.\n"),
       );
       process.exit(0);
     });

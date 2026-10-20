@@ -79,8 +79,8 @@ export function buildPennyMcpServer(): McpServer {
     "penny_issue_spt",
     {
       description:
-        "Issue a scoped/capped/expiring Shared Payment Token for an agent (test mode). Validates least-agency " +
-        "scope (O-11), writes a money-action audit line, fuses with helios's balance-cap. [O-11/S-13]",
+        "Check a scoped/capped/expiring Shared Payment Token scope for an agent and write a money-action audit " +
+        "line. This version does not call Stripe: no token is issued and sptId is a local placeholder. [O-11/S-13]",
       inputSchema: issueSptSchema,
     },
     async (args) => asContent(issueSptTool(args)),
@@ -90,8 +90,8 @@ export function buildPennyMcpServer(): McpServer {
     "penny_reconcile",
     {
       description:
-        "Diff the internal usage/entitlement ledger vs Stripe; alarm on divergence. On no-network, degrades to " +
-        "'unknown, reconciling' — never asserts money-moved from a transport failure. [JTBD-0/O-09/P-18]",
+        "Explain the internal ledger vs Stripe reconcile. This version does not call Stripe, so it diffs nothing. " +
+        "On no-network, it degrades to 'unknown, reconciling' and never asserts money moved. [JTBD-0/O-09/P-18]",
       inputSchema: reconcileSchema,
     },
     async (args) => asContent(reconcileTool(args)),
@@ -101,8 +101,8 @@ export function buildPennyMcpServer(): McpServer {
     "penny_meter_create",
     {
       description:
-        "Create a Stripe Meter 'named like a public API'; refuse a bad aggregation or a re-create (meters are " +
-        "near-immutable — wrong agg/unit forces a new meter + a subscription migration). [O-07/P-10]",
+        "Record a Meter spec locally, 'named like a public API'. This version does not call Stripe. Refuses a bad " +
+        "aggregation or a re-create (wrong agg/unit forces a new meter + a subscription migration). [O-07/P-10]",
       inputSchema: meterCreateSchema,
     },
     async (args) => asContent(meterCreateTool(args)),

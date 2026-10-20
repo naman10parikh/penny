@@ -148,9 +148,9 @@ export function debugTool(args: { symptom: string; context?: string }): {
 }
 
 // ---------------------------------------------------------------------------
-// penny_issue_spt — issue a scoped/capped/expiring SPT (test mode). Validates the
-// least-agency scope (O-11), writes an append-only audit line (the money-relevant
-// action — ledger-is-truth applied to penny's own telemetry), returns id + scope.
+// penny_issue_spt — check a scoped/capped/expiring SPT scope. Validates the least-agency
+// scope (O-11), writes an append-only audit line (the money-relevant action — ledger-is-truth
+// applied to penny's own telemetry), returns a local placeholder id + scope. No Stripe call.
 // ---------------------------------------------------------------------------
 export const issueSptSchema = {
   sellerId: z.string().describe("the only seller this token can pay (seller-locked)"),
@@ -196,7 +196,7 @@ export function issueSptTool(args: {
     sptId,
     auditId,
     scope: v.scope,
-    note: "test-mode SPT (seller-locked + capped + expiring). Fuses with helios's balance-cap — penny consumes helios's ledger, it does NOT rebuild it. [O-11/S-13]",
+    note: "Scope checked (seller-locked + capped + expiring) and recorded in the audit log. This version does not call Stripe, so sptId is a local placeholder, not a Stripe token. Fuses with helios's balance-cap: penny consumes helios's ledger and does not rebuild it. [O-11/S-13]",
   };
 }
 
@@ -233,7 +233,7 @@ export function reconcileTool(args: { since: string; network?: boolean }): {
     jtbdLaw: JTBD0_LAW,
     divergences: [],
     alarmed: false,
-    note: "Live reconcile diffs the internal usage ledger vs meter-event-summary, re-fetches canonical objects, alarms on divergence, respects the 100 rp/s limit. [O-09/S-09]",
+    note: "This version does not call Stripe, so nothing was diffed: divergences is empty because no reconcile ran, not because the ledger matches. A live reconcile would diff the usage ledger vs meter-event-summary and re-fetch canonical objects. [O-09/S-09]",
   };
 }
 
@@ -255,6 +255,7 @@ export function meterCreateTool(args: { name: string; aggregation: string; unit:
   ok: boolean;
   meter?: { name: string; aggregation: string; unit: string };
   reason?: string;
+  note?: string;
 } {
   if (args.name.length === 0 || args.name.length > 100) {
     return { ok: false, reason: `event_name must be 1–100 chars (got ${args.name.length}). [P-10]` };
@@ -272,7 +273,11 @@ export function meterCreateTool(args: { name: string; aggregation: string; unit:
     };
   }
   recordMeter({ name: args.name, aggregation: args.aggregation, unit: args.unit });
-  return { ok: true, meter: { name: args.name, aggregation: args.aggregation, unit: args.unit } };
+  return {
+    ok: true,
+    meter: { name: args.name, aggregation: args.aggregation, unit: args.unit },
+    note: "Meter spec recorded locally. This version does not call Stripe, so no Stripe Meter exists. [O-07/P-10]",
+  };
 }
 
 // ---------------------------------------------------------------------------

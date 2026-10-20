@@ -1,5 +1,6 @@
-// `penny meter create <name> --agg <sum|count|last> --unit <u>` — create a Stripe Meter
-// "named like a public API" and REFUSE to re-create one that exists. Meters are near-immutable
+// `penny meter create <name> --agg <sum|count|last> --unit <u>` — record a Meter spec locally
+// (this version does not call Stripe), "named like a public API", and REFUSE to re-create one that
+// exists. Meters are near-immutable
 // (only the display name is mutable); a wrong aggregation or unit forces a brand-new meter +
 // a subscription migration (O-07 / P-10). penny treats the meter name like a public API surface
 // and decides the unit of value before creation. Test mode by default.
@@ -7,17 +8,17 @@
 import { Command } from "commander";
 import chalk from "chalk";
 import { validateMeterEventTimestamp, type BillingPeriod } from "../wire/meter-event.js";
-import { isMeterDeclared, recordMeter } from "../wire/meter-registry.js";
+import { isMeterDeclared, meterRegistryPath, recordMeter } from "../wire/meter-registry.js";
 
 const VALID_AGGREGATIONS = ["sum", "count", "last"] as const;
 type Aggregation = (typeof VALID_AGGREGATIONS)[number];
 
 export function registerMeter(program: Command): void {
-  const meter = program.command("meter").description("manage Stripe Meters (near-immutable — name like a public API)");
+  const meter = program.command("meter").description("plan Stripe Meters locally, with no Stripe call (near-immutable, so name them like a public API)");
 
   meter
     .command("create")
-    .description("create a Meter; refuses to re-create (meters are near-immutable, O-07/P-10)")
+    .description("record a Meter spec locally (no Stripe call); refuses to re-create (meters are near-immutable, O-07/P-10)")
     .argument("<name>", "event_name (≤100 chars; treat like a public API — it is near-permanent)")
     .requiredOption("--agg <aggregation>", `aggregation: ${VALID_AGGREGATIONS.join(" | ")}`)
     .requiredOption("--unit <unit>", "the unit of value (decide this BEFORE creating — it is baked in)")
@@ -58,12 +59,12 @@ export function registerMeter(program: Command): void {
       recordMeter({ name, aggregation: opts.agg, unit: opts.unit });
 
       process.stdout.write(
-        chalk.yellow(`penny meter create (test mode)\n`) +
+        chalk.yellow(`penny meter create: recorded locally in ${meterRegistryPath()}. No Stripe Meter was created.\n`) +
           `  event_name  : ${name}\n` +
           `  aggregation : ${opts.agg}\n` +
           `  unit        : ${opts.unit}\n` +
           chalk.dim(`  brain: O-07/P-10 — name the meter like a public API; the unit of value is baked in.\n`) +
-          chalk.green(`\nMeter spec validated. (Wire to Stripe test-mode meter_events in the wire step.)\n`),
+          chalk.green(`\nMeter spec validated. This version does not call Stripe.\n`),
       );
       process.exit(0);
     });

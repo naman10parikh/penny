@@ -13,7 +13,7 @@ import { appendAudit } from "../mcp/audit.js";
 export function registerIssueSpt(program: Command): void {
   program
     .command("issue-spt")
-    .description("issue a scoped/capped/expiring Shared Payment Token (agent never sees the card; test mode)")
+    .description("check and record a scoped/capped/expiring Shared Payment Token scope (no Stripe call, no token issued)")
     .requiredOption("--seller <id>", "the ONLY seller this token can pay (seller-locked, O-11)")
     .requiredOption("--cap <amount>", "total spend cap in the smallest currency unit (e.g. cents)")
     .requiredOption("--expires <ts>", "absolute expiry: unix-ms or ISO date (time-expiring, O-11)")
@@ -38,11 +38,10 @@ export function registerIssueSpt(program: Command): void {
       }
 
       const { scope } = v;
-      // This is the validated least-agency SCOPE. Even though the live Stripe test-mode SPT call +
-      // the helios balance-cap fusion happen via the agent-spend skill / MCP tool (C1), issuing a
-      // scoped spend credential IS a money-relevant action — so penny writes an append-only audit
-      // line HERE (E6 / §10: issue-SPT writes the ledger-is-truth trail). The cap is never logged in
-      // a way that exposes a secret; only the bounded scope is recorded.
+      // This is the validated least-agency SCOPE. This version calls Stripe nowhere, here or in the
+      // MCP tool, so no token is issued. A scoped spend credential is still a money-relevant action,
+      // so penny writes an append-only audit line HERE (E6 / §10: issue-SPT writes the ledger-is-truth
+      // trail). The cap is never logged in a way that exposes a secret; only the bounded scope is recorded.
       const auditId = appendAudit({
         action: "issue-spt",
         brainRef: "O-11 / S-13",
@@ -55,14 +54,14 @@ export function registerIssueSpt(program: Command): void {
         },
       });
       process.stdout.write(
-        chalk.yellow(`penny issue-spt (TEST MODE — penny never moves real money)\n`) +
+        chalk.yellow(`penny issue-spt: scope checked and recorded locally. No token was issued.\n`) +
           `  seller-locked : ${scope.sellerId}\n` +
           `  amount-capped : ${scope.capAmount} (smallest currency unit)\n` +
           `  time-expiring : ${new Date(scope.expiresAt).toISOString()}\n` +
           `  for agent     : ${scope.agentId}\n` +
           chalk.dim(`  fuse: gate spend on helios's balance cap (funding/state.ts) — consume it, do NOT rebuild it. [O-11]\n`) +
           chalk.dim(`  audit: money-action line written → logs/audit.jsonl (id ${auditId.slice(0, 8)}). [JTBD-0]\n`) +
-          chalk.green(`\nScope validated as least-agency. (Issue via the agent-spend skill / penny_issue_spt MCP tool.)\n`),
+          chalk.green(`\nScope validated as least-agency. This version does not call Stripe, so no Shared Payment Token exists.\n`),
       );
       process.exit(0);
     });

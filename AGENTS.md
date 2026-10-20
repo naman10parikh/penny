@@ -46,16 +46,16 @@ penny review <path>              # audit an existing billing integration against
 penny debug <symptom>            # root-cause a live billing incident via JTBD-0 (e.g. "every webhook 400s" →
                                  #   P-04/S-03 raw-body footgun). Never infers money-state from a status code.
 penny issue-spt --seller <id> --cap <amt> --expires <ts> [--agent <id>]
-                                 # issue a scoped/capped/expiring Shared Payment Token (the agent never sees the
-                                 #   card); fuses with helios's balance-cap. Test mode. (JTBD-5 / S-13 / O-11.)
+                                 # check a scoped/capped/expiring Shared Payment Token scope and write an audit
+                                 #   line. This version does not call Stripe, so no token is issued. (JTBD-5 / S-13 / O-11.)
 penny reconcile --since <ts> [--no-network]
-                                 # diff the internal usage/entitlement ledger vs Stripe (meter-event-summary /
-                                 #   canonical objects); alarm on divergence. --no-network degrades to
+                                 # explain the ledger vs Stripe diff. This version does not call Stripe, so it
+                                 #   diffs nothing and says so. --no-network degrades to
                                  #   "unknown, reconciling" (JTBD-0). (S-09 / O-09.)
 penny webhook listen             # wrap `stripe listen --forward-to` + raw-body HMAC self-test (S-01/S-02/S-03).
 penny meter create <name> --agg <sum|count|last> --unit <u>
-                                 # create a Meter ("name it like a public API"); refuses re-create + bad agg
-                                 #   (near-immutable — O-07 / P-10).
+                                 # record a Meter spec locally ("name it like a public API"); refuses re-create
+                                 #   + bad agg (O-07 / P-10). This version does not create the meter in Stripe.
 penny check-version [--api-version <v>]
                                  # contract-test the pinned API-version shape your code reads ($0, no live API).
                                  #   The headline L1 contract test (S-17 / O-16).
@@ -75,9 +75,9 @@ A JSON-RPC `tools/list` returns exactly 8 tools:
 - `penny_wire({ productSpec, targetDir?, dryRun? })` → scaffolds + self-tests billing; returns a step report.
 - `penny_review_integration({ path })` → `[{ pitfallId, file, line, severity, fix, brainRef }]`.
 - `penny_debug({ symptom, context? })` → `{ rootCause, jtbdLaw, brainRef, fix }`.
-- `penny_issue_spt({ sellerId, capAmount, expiresAt, agentId })` → test-mode SPT + audit-log id.
-- `penny_reconcile({ since })` → `{ divergences[], alarmed }`.
-- `penny_meter_create({ name, aggregation, unit })` → meter id or refusal (immutability guard).
+- `penny_issue_spt({ sellerId, capAmount, expiresAt, agentId })` → checked scope, audit-log id and a local placeholder id (no Stripe call, no token).
+- `penny_reconcile({ since })` → `{ divergences[], alarmed }`, always empty: this version does not call Stripe, and its note says so.
+- `penny_meter_create({ name, aggregation, unit })` → the recorded spec or a refusal (immutability guard). No Stripe Meter is created.
 - `penny_check_version({ apiVersion? })` → `{ shapeOk, fieldsChecked[], drift[] }` (the L1 contract test).
 - `penny_explain({ question })` → cited brain answer (BM25 over `brain/`).
 
