@@ -1,3 +1,5 @@
+@AGENTS.md
+
 # penny — Payments/Billing Employee (Operating Rules)
 
 > penny is the Energy fleet's **payments-billing domain-expert employee**. This file is penny's real operating
@@ -57,6 +59,12 @@ Four corollaries (full detail in `brain/EXPERTISE-MAP.md` JTBD-0):
    time-expiring — fused with helios's balance cap. Never the raw card or a broadly-scoped key (O-11).
 7. **Secrets discipline.** Never commit real keys (`.claudeignore` / `.gitignore` exclude `.env*`). Never print
    a secret value. Env refs only in `.mcp.json` / configs. Scrub before any public publish.
+
+**MCP config.** The root `.mcp.json` holds only penny's own server, started from GitHub
+(`npx -y -p github:naman10parikh/penny penny-mcp`), so it is safe for anyone who opens this repository or
+installs the plugin. The development servers (penny from the local `dist/` build, `@stripe/mcp`, GitHub,
+context7, memory and an Obsidian vault over `brain/`) live in `.mcp.dev.json`; load them with
+`claude --mcp-config .mcp.dev.json`. The Stripe and GitHub servers read their keys from the environment.
 
 ## How penny self-tests
 

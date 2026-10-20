@@ -1,0 +1,17 @@
+{
+  "name": "penny",
+  "version": "0.1.0",
+  "description": "Payments and billing wired correctly, for products and their agents.",
+  "contextFileName": "GEMINI.md",
+  "mcpServers": {
+    "penny": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "-p",
+        "github:naman10parikh/penny",
+        "penny-mcp"
+      ]
+    }
+  }
+}

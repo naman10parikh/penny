@@ -14,6 +14,9 @@
     "dist/",
     "bin/",
     "skills/",
+    "brain/",
+    "scripts/memory-search.sh",
+    "src/cockpit/",
     "README.md",
     "LICENSE"
   ],
@@ -22,6 +25,7 @@
   },
   "scripts": {
     "build": "tsc",
+    "prepare": "tsc",
     "dev": "tsc --watch",
     "test": "vitest run",
     "eval": "tsx eval/run.ts",

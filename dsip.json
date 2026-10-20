@@ -17,7 +17,7 @@
       "ship"
     ]
   },
-  "selection": "eval-gated",
+  "selection": "performance",
   "eval": {
     "rubric": "eval/ (Hamel L1 assertions + L2 behavior + L3 trajectory; golden tasks from brain/BATTLE-TESTED-SCENARIOS.md)",
     "gate": "acceptance-test-green && no-regression",
@@ -25,8 +25,8 @@
   },
   "snapback": {
     "granularity": [
-      "component",
-      "repo"
+      "skill",
+      "employee"
     ],
     "vcs": "git"
   },

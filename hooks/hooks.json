@@ -1,0 +1,27 @@
+{
+  "description": "penny's billing guards: block the dead createUsageRecord API, warn on a webhook that parses the body before verifying its signature, and load the ledger-is-truth law at session start.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/pretooluse-billing-guard.sh\""
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/sessionstart-brain-law.sh\""
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -32,6 +32,9 @@ DB as the entitlement source of truth; (D) the processor balance is not your cas
 
 ## How to invoke penny — the `penny` CLI (Bash-invokable)
 
+Run it without cloning: `npx -y -p github:naman10parikh/penny penny <command>` (npm builds `dist/` on install).
+Inside a clone: `pnpm install && pnpm build`, then `node bin/penny.js <command>`.
+
 ```
 penny wire --product <spec> [--target <dir>] [--dry-run]
                                  # THE acceptance test: scaffold Stripe test-mode billing into a target →
@@ -63,8 +66,9 @@ penny --help | --version         # standard; exit 0 / non-zero.
 
 ## How to invoke penny — the MCP server (penny's own, 8 tools)
 
-penny ships its **own** MCP server (`node dist/mcp/server.js`, stdio) — listed in `.mcp.json` as `penny`,
-beyond the inherited 4-server template. It adds the **taste/correctness layer** on top of Stripe; it is NOT a
+penny ships its **own** MCP server, the `penny-mcp` bin (stdio). Start it with
+`npx -y -p github:naman10parikh/penny penny-mcp`; the root `.mcp.json` wires exactly that, and `.mcp.dev.json`
+runs the local build (`node dist/mcp/server.js`) beside `@stripe/mcp` and the other dev servers. It adds the **taste/correctness layer** on top of Stripe; it is NOT a
 raw `@stripe/mcp` passthrough (penny *lists* `@stripe/mcp` for raw operations, it does not merely wrap it).
 A JSON-RPC `tools/list` returns exactly 8 tools:
 
@@ -78,7 +82,7 @@ A JSON-RPC `tools/list` returns exactly 8 tools:
 - `penny_explain({ question })` → cited brain answer (BM25 over `brain/`).
 
 Dual-mode: **stdio local now**; hosted-OAuth is documented-deferred. Env-ref keys only — no literal secrets
-in `.mcp.json`.
+in `.mcp.json` or `.mcp.dev.json`.
 
 ## The `stripe` CLI — penny's webhook self-test rig
 
@@ -141,4 +145,6 @@ The six expertise artifacts under `brain/` are penny's mastery. Query them with 
 - `identity/SOUL.md` — the full persona (Identity → Personality → Boundaries).
 - `llms.txt` — the agent-readable map of every doc and surface in this repo.
 - `.well-known/agent.json` — the A2A agent card (name / description / endpoint / capabilities).
-- `.claude-plugin/manifest.json` — the plugin bundle (CLI + MCP + 5 skills + 2 hooks + 2 sub-agents).
+- `.claude-plugin/plugin.json` — the Claude Code plugin (5 skills, 2 sub-agents, the MCP server; its 2 hooks are in
+  `hooks/hooks.json`), listed by `.claude-plugin/marketplace.json`. The older `manifest.json` documents the bundle.
+- `gemini-extension.json` — the Gemini CLI extension.

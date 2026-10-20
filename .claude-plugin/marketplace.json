@@ -1,11 +1,11 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
-  "name": "penny-marketplace",
+  "name": "penny",
   "version": "0.1.0",
   "description": "Energy fleet marketplace entry for penny — the payments/billing domain-expert employee plugin.",
   "owner": {
-    "name": "Energy Platform",
-    "email": "[removed]"
+    "name": "Naman Parikh",
+    "url": "https://github.com/naman10parikh"
   },
   "plugins": [
     {
@@ -13,10 +13,10 @@
       "description": "The Energy fleet's payments/billing employee — wires Stripe test-mode billing (checkout E2E + raw-body HMAC webhook + idempotent replay), reviews against 21 known pitfalls, debugs live incidents via the ledger-is-truth law, issues scoped agent-spend credentials. Product billing only — earning loops stay with helios. Bundles the penny CLI, penny's own MCP server (8 tools), 5 skills, 2 hooks, and 2 sub-agents.",
       "version": "0.1.0",
       "author": {
-        "name": "Energy Platform",
-        "email": "[removed]"
+        "name": "Naman Parikh",
+        "url": "https://github.com/naman10parikh"
       },
-      "source": ".",
+      "source": "./",
       "category": "development",
       "keywords": [
         "payments",

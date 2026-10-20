@@ -9,6 +9,7 @@
 // DEFERRED — when penny is published as a remote MCP, the same tool handlers swap StdioServerTransport
 // for an HTTP+OAuth transport; the tool layer (src/mcp/tools.ts) is transport-agnostic.
 
+import { realpathSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -156,8 +157,10 @@ export async function startStdio(): Promise<void> {
 // Self-boot when this module is the entry point (`node dist/mcp/server.js` — the `.mcp.json` command,
 // the `penny-mcp` bin, and the C1 verify line). The MCP host owns the lifecycle; we stay alive on the
 // transport until stdin closes. Matches the sibling fleet convention (turbo/acorn/badge).
+// argv[1] is resolved through realpath: an npm-installed `penny-mcp` runs through a symlink in
+// node_modules/.bin, and comparing the symlink path to import.meta.url meant the server never booted.
 const isMain =
-  process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
+  process.argv[1] !== undefined && import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href;
 if (isMain) {
   startStdio().catch((e: unknown) => {
     process.stderr.write(`✗ penny-mcp: ${e instanceof Error ? e.message : String(e)}\n`);

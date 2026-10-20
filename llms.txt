@@ -1,75 +1,85 @@
 # penny
 
-> The Energy fleet's **payments / billing** domain-expert employee — a senior payments engineer that wires
-> correct Stripe test-mode billing into a product, reviews an integration against 21 known pitfalls, debugs a
-> live incident against the ledger-is-truth law, and issues scoped/capped/expiring agent-spend credentials. A
-> tool-employee operated by coding agents (CLI + MCP) and watched by the chairman (the local cockpit).
-> Boundary: product billing only — earning loops stay with helios. Powered by Energy.
+> Payments and billing wired correctly, for products and their agents: an agent-native, self-improving payments employee that coding agents call through a CLI, an MCP server and skills.
 
-This is the agent-readable map of penny's docs and surfaces. **Read `AGENTS.md` first** for how to invoke
-every tool, the hard boundary, and the NOT-list. Paths are repo-relative to `~/penny`.
+penny is a senior payments engineer as a tool. It wires correct Stripe test-mode billing into a product, reviews an integration against 21 known pitfalls, debugs a live incident against the ledger-is-truth law, and issues scoped, capped, expiring agent-spend credentials. Boundary: product billing only; earning loops stay with helios.
 
-**THE LAW (JTBD-0):** the ledger is the truth, not the status code — never infer money-state from a transport
-status; reconcile or say "unknown, reconciling." **Pinned Stripe API version:** `2026-05-27.dahlia`. **Test
-mode is the default and the acceptance bar;** `sk_live` only behind the chairman checklist.
+THE LAW (JTBD-0): the ledger is the truth, not the status code. Never infer money-state from a transport status; reconcile, or say "unknown, reconciling." Pinned Stripe API version: `2026-05-27.dahlia`. Test mode is the default and the acceptance bar.
+
+Run it from GitHub with no clone: `npx -y -p github:naman10parikh/penny penny --help` for the CLI and `npx -y -p github:naman10parikh/penny penny-mcp` for the MCP server (stdio). Paths below are relative to the repository root.
 
 ## Start here
-- [AGENTS.md](./AGENTS.md): What penny does, how to invoke every CLI/MCP tool, the boundary, the NOT-list, the `stripe` self-test rig.
-- [CLAUDE.md](./CLAUDE.md): Claude Code operating doc for this repo (the voice + THE LAW + the cluster order).
-- [GOAL.md](./GOAL.md): The North Star for this harness.
+
+- [AGENTS.md](./AGENTS.md): what penny does, how to invoke every CLI and MCP tool, the boundary, the NOT-list and the `stripe` self-test rig.
+- [CLAUDE.md](./CLAUDE.md): the Claude Code operating doc for this repository (the voice, THE LAW, the cluster order); it imports AGENTS.md.
+- [README.md](./README.md): what it is, the quick start, and how to install it in any coding agent.
 
 ## Identity
-- [identity/SOUL.md](./identity/SOUL.md): Who penny is — Identity → Personality → Boundaries ("counts every cent, trusts no status code").
-- [identity/BRAND.md](./identity/BRAND.md): Name rationale (penny = the smallest unit of money, counted exactly), tagline, warm-black/amber design tokens.
-- [.well-known/agent.json](./.well-known/agent.json): A2A agent card (name / description / endpoint / capabilities).
 
-## Tools — the `penny` CLI (Bash-invokable; exit 0 / non-zero)
-- `penny wire --product <spec> [--target <dir>] [--dry-run]` — **THE acceptance test:** scaffold Stripe test-mode billing → checkout E2E + raw-body HMAC webhook + idempotent replay. `--dry-run` prints the scaffold→verify→self-test step plan.
-- `penny review <path>` — audit a billing integration against the 21 KNOWN-PITFALLS → findings (pitfall id · file:line · severity · fix · brainRef). Non-zero exit when findings exist.
-- `penny debug <symptom>` — root-cause a live billing incident via JTBD-0 (e.g. "every webhook 400s" → P-04/S-03).
-- `penny issue-spt --seller <id> --cap <amt> --expires <ts>` — issue a scoped/capped/expiring Shared Payment Token (test mode); fuses with helios's balance-cap (S-13/O-11).
-- `penny reconcile --since <ts> [--no-network]` — diff the internal ledger vs Stripe; `--no-network` degrades to "unknown, reconciling" (S-09/O-09).
-- `penny webhook listen` — wrap `stripe listen --forward-to` + raw-body HMAC self-test (S-01/S-02/S-03).
-- `penny meter create <name> --agg <sum|count|last> --unit <u>` — create a near-immutable Meter; refuses re-create + bad agg (O-07/P-10).
-- `penny check-version [--api-version <v>]` — contract-test the pinned API-version shape your code reads ($0, the headline L1 — S-17/O-16).
-- `penny explain <topic>` — ask the payments employee: BM25 over `brain/` → cited answer.
-- `penny runs-view [--json]` — aggregate the per-run log + the money-action audit trail (observability).
+- [identity/SOUL.md](./identity/SOUL.md): who penny is ("counts every cent, trusts no status code"): identity, personality, boundaries.
+- [identity/BRAND.md](./identity/BRAND.md): the name (penny, the smallest unit of money, counted exactly), the tagline and design tokens.
+- [.well-known/agent.json](./.well-known/agent.json): the A2A agent card (name, description, endpoint, capabilities).
 
-## The `stripe` CLI — penny's webhook self-test rig (test mode)
-- Install: [scripts/install-stripe-cli.sh](./scripts/install-stripe-cli.sh).
-- `stripe listen --forward-to localhost:<port>/webhook` — forward test-mode events; prints the `whsec_…` signing secret (`penny webhook listen` wraps it).
-- `stripe trigger checkout.session.completed` — fire a known event to exercise the raw-body HMAC path (S-03/P-04).
-- `stripe fixtures <file>` — drive a scripted multi-event scenario (subscription lifecycle, metered flush).
-- The acceptance test ([test/acceptance/](./test/acceptance)) and every webhook golden task lean on this rig; CI installs it before the `acceptance` job.
+## CLI (`penny`; exit 0 or non-zero)
 
-## MCP server (penny's OWN — 8 tools; the taste layer, not a raw `@stripe/mcp` passthrough)
-- [.mcp.json](./.mcp.json): the `penny` server entry (env-ref keys only — no literal secrets) + `@stripe/mcp` listed for raw passthrough.
-- **Endpoint / transport:** default **stdio** — `node dist/mcp/server.js` (or the `penny-mcp` bin). Dual-mode: hosted-OAuth is documented-deferred.
-- **`tools/list`** returns 8: `penny_wire` (→`penny wire`), `penny_review_integration` (→`penny review`), `penny_debug` (→`penny debug`), `penny_issue_spt` (→`penny issue-spt`), `penny_reconcile` (→`penny reconcile`), `penny_meter_create` (→`penny meter create`), `penny_check_version` (→`penny check-version`), `penny_explain` (→`penny explain`).
+- [wire](./src/wire/command.ts): `penny wire --product <spec> [--target <dir>] [--dry-run]` is the acceptance test: Stripe test-mode billing with checkout E2E, a raw-body HMAC webhook and idempotent replay.
+- [review](./src/review/command.ts): `penny review <path>` audits a billing integration against the 21 known pitfalls (pitfall id, file:line, severity, fix, brain ref); non-zero exit when findings exist.
+- [debug](./src/cli/debug.ts): `penny debug <symptom>` root-causes a live billing incident via JTBD-0 (for example "every webhook 400s" leads to P-04/S-03).
+- [issue-spt](./src/cli/issue-spt.ts): `penny issue-spt --seller <id> --cap <amt> --expires <ts>` issues a scoped, capped, expiring Shared Payment Token in test mode.
+- [reconcile](./src/cli/reconcile.ts): `penny reconcile --since <ts> [--no-network]` diffs the internal ledger against Stripe; with no network it says "unknown, reconciling."
+- [webhook](./src/cli/webhook.ts): `penny webhook listen` wraps `stripe listen --forward-to` with a raw-body HMAC self-test.
+- [meter](./src/cli/meter.ts): `penny meter create <name> --agg <sum|count|last> --unit <u>` creates a near-immutable Meter and refuses a re-create or a bad aggregation.
+- [check-version](./src/cli/check-version.ts): `penny check-version [--api-version <v>]` contract-tests the pinned API-version shape your code reads (no live API).
+- [explain](./src/cli/explain.ts): `penny explain <topic>` asks the brain (BM25 over `brain/`) for a cited answer.
+- [runs-view](./src/obs/runs-view.ts): `penny runs-view [--json]` summarises the run log and the money-action audit trail.
 
-## Skills (`skills/*/SKILL.md` — each step cites a brain ref; invokable from energy)
-- [stripe-webhook-correctness](./skills/stripe-webhook-correctness/SKILL.md): P-01..P-05 + O-02/O-09 + S-01/S-02/S-03 — raw-body HMAC, same-transaction idempotency, ack-fast-process-durably, re-fetch on ordering-sensitive logic, at-least-once+DLQ.
-- [subscription-proration](./skills/subscription-proration/SKILL.md): O-05/O-06/O-10 + P-06/P-07/P-17 + S-04..S-08 — gate proration on payment status, reconcile the old invoice, Subscription Schedules not polling, pin `billing_mode`, anchor resets on trial conversion.
-- [metered-billing](./skills/metered-billing/SKILL.md): O-06/O-07/O-08 + P-08..P-11 + S-09/S-10 — Meters mandatory, real-time flush + daily reconcile, 35-day/current-period rules, meter immutability, bill-shock = product failure → degrade gracefully.
-- [agent-spend-credential](./skills/agent-spend-credential/SKILL.md): O-11/O-12 + P-21 + S-13 — SPT seller-locked+capped+expiring, fuse with helios's balance-cap, card-rail-first / x402-escape-hatch, ledger↔provider reconciliation.
-- [stripe-version-migration](./skills/stripe-version-migration/SKILL.md): O-01/O-15/O-16 + P-16/P-18/P-20 + S-17/S-18 — pin version + shape-contract test, import-first/cancel-after, treat non-2xx as ambiguous.
+## The `stripe` CLI, penny's webhook self-test rig (test mode)
 
-## Sub-agents (`.claude/agents/` — flat; explicit model tier; cite the brain)
-- [billing-reviewer](./.claude/agents/billing-reviewer.md): audits a billing-code tree against the 21 KNOWN-PITFALLS *before* it ships. Shares the `penny review` scan logic; packaged reusable (`Agent(subagent_type="billing-reviewer")`).
-- [payment-debugger](./.claude/agents/payment-debugger.md): root-causes a *live* incident via JTBD-0. Shares the `penny debug` triage map.
+- [scripts/install-stripe-cli.sh](./scripts/install-stripe-cli.sh): installs the `stripe` CLI.
+- `stripe listen --forward-to localhost:<port>/webhook` forwards test-mode events and prints the signing secret (`penny webhook listen` wraps it); `stripe trigger checkout.session.completed` fires a known event; `stripe fixtures <file>` drives a scripted scenario.
+- [test/acceptance/](./test/acceptance): the acceptance test, which leans on this rig.
 
-## The brain (Memory — the six expertise artifacts)
-- [brain/MOC - penny.md](./brain/MOC%20-%20penny.md): the master hub for the brain.
-- [brain/EXPERTISE-MAP.md](./brain/EXPERTISE-MAP.md): the map of mastery, by job-to-be-done (start here; JTBD-0 is THE LAW).
-- [brain/OPINIONS.md](./brain/OPINIONS.md): the anti-slop taste layer (O-01…O-16).
-- [brain/KNOWN-PITFALLS.md](./brain/KNOWN-PITFALLS.md): version-specific gotchas with detection + fix (P-01…P-21).
-- [brain/BATTLE-TESTED-SCENARIOS.md](./brain/BATTLE-TESTED-SCENARIOS.md): the golden eval tasks (S-01…S-18).
-- [brain/TOOL-MATRIX.md](./brain/TOOL-MATRIX.md): canonical tools, defaults vs alts, agent-access, required secrets.
-- [brain/GAPS-AND-DISPUTES.md](./brain/GAPS-AND-DISPUTES.md): where sources disagree + the open items (G-01…G-06) the nightly RSI loop closes by experiment.
-- Query it: `penny explain "<query>"` (BM25 ranked) or `bash scripts/memory-search.sh "<query>"`.
+## MCP server (`penny-mcp`, 8 tools; a taste layer, not a raw `@stripe/mcp` passthrough)
 
-## Packaging & RSI
-- [.claude-plugin/manifest.json](./.claude-plugin/manifest.json): the plugin bundle (CLI + MCP + 5 skills + 2 hooks + 2 sub-agents); `claude plugin install penny`.
-- [.claude/settings.json](./.claude/settings.json): the 2 hooks (PreToolUse dead-API/raw-body guard + SessionStart brain-LAW inject).
-- [workflows/rsi.workflow.js](./workflows/rsi.workflow.js): the deterministic ($0, tokenless) nightly RSI loop — `node workflows/rsi.workflow.js --deterministic`.
-- [dsip.json](./dsip.json): the Darwin self-improvement spec (eval-gated, no-self-grading).
+- [src/mcp/server.ts](./src/mcp/server.ts): the stdio server. Tools: `penny_wire`, `penny_review_integration`, `penny_debug`, `penny_issue_spt`, `penny_reconcile`, `penny_meter_create`, `penny_check_version`, `penny_explain`. Hosted OAuth is documented as deferred.
+- [.mcp.json](./.mcp.json): the config any MCP client can copy; it starts the server from GitHub. The dev servers (`@stripe/mcp` and others) are in `.mcp.dev.json`.
+
+## Skills (each step cites a brain ref)
+
+- [stripe-webhook-correctness](./skills/stripe-webhook-correctness/SKILL.md): raw-body HMAC, same-transaction idempotency, ack fast and process durably, re-fetch on ordering-sensitive logic.
+- [subscription-proration](./skills/subscription-proration/SKILL.md): gate proration on payment status, reconcile the old invoice, use Subscription Schedules, pin `billing_mode`.
+- [metered-billing](./skills/metered-billing/SKILL.md): Meters are mandatory, real-time flush plus daily reconcile, meter immutability, degrade gracefully on bill shock.
+- [agent-spend-credential](./skills/agent-spend-credential/SKILL.md): a seller-locked, capped, expiring token fused with helios's balance cap; card rail first, x402 as the escape hatch.
+- [stripe-version-migration](./skills/stripe-version-migration/SKILL.md): pin the version with a shape-contract test, import first and cancel after, treat non-2xx as ambiguous.
+
+## Sub-agents (`.claude/agents/`, flat)
+
+- [billing-reviewer](./.claude/agents/billing-reviewer.md): audits a billing-code tree against the 21 known pitfalls before it ships (shares the `penny review` logic).
+- [payment-debugger](./.claude/agents/payment-debugger.md): root-causes a live incident via JTBD-0 (shares the `penny debug` triage map).
+
+## The brain (what penny knows)
+
+- [brain/MOC - penny.md](./brain/MOC%20-%20penny.md): the hub for the brain.
+- [brain/EXPERTISE-MAP.md](./brain/EXPERTISE-MAP.md): the map of mastery by job to be done; JTBD-0 is THE LAW.
+- [brain/OPINIONS.md](./brain/OPINIONS.md): the taste layer (O-01 to O-16).
+- [brain/KNOWN-PITFALLS.md](./brain/KNOWN-PITFALLS.md): version-specific gotchas with detection and fix (P-01 to P-21).
+- [brain/BATTLE-TESTED-SCENARIOS.md](./brain/BATTLE-TESTED-SCENARIOS.md): the golden eval tasks (S-01 to S-18).
+- [brain/TOOL-MATRIX.md](./brain/TOOL-MATRIX.md): canonical tools, defaults and alternatives, agent access, required secrets.
+- [brain/GAPS-AND-DISPUTES.md](./brain/GAPS-AND-DISPUTES.md): where sources disagree, and the open items the nightly loop works on.
+- Query it: `penny explain "<query>"` or `bash scripts/memory-search.sh "<query>"`.
+
+## Install surfaces and self-improvement
+
+- [.claude-plugin/plugin.json](./.claude-plugin/plugin.json): the Claude Code plugin (skills, sub-agents, MCP server); install with `/plugin marketplace add naman10parikh/penny`.
+- [.claude-plugin/marketplace.json](./.claude-plugin/marketplace.json): the one-plugin marketplace.
+- [hooks/hooks.json](./hooks/hooks.json): the plugin's two hooks (the dead-API and raw-body guard, and the session-start law).
+- [.claude/settings.json](./.claude/settings.json): the same two hooks for work inside this repository.
+- [gemini-extension.json](./gemini-extension.json): the Gemini CLI extension.
+- [workflows/rsi.workflow.js](./workflows/rsi.workflow.js): the deterministic, tokenless nightly loop (`node workflows/rsi.workflow.js --deterministic`).
+- [dsip.json](./dsip.json): the self-improvement contract (eval-gated, no self-grading, git snapback).
+
+## Optional
+
+- [SECURITY.md](./SECURITY.md): how to report a vulnerability.
+- [CONTRIBUTING.md](./CONTRIBUTING.md): how to contribute.
+- [LICENSE](./LICENSE): MIT.

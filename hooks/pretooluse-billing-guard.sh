@@ -26,7 +26,8 @@
 set -uo pipefail
 
 REPO_DIR="${CLAUDE_PROJECT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
-GUARD_LOG="$REPO_DIR/hooks/billing-guard.log"
+# As a plugin, log to the plugin's data dir, never into the user's project.
+GUARD_LOG="${CLAUDE_PLUGIN_DATA:-$REPO_DIR/hooks}/billing-guard.log"
 TS="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
 
 PAYLOAD="$(cat 2>/dev/null || true)"
