@@ -4,7 +4,7 @@
 // Loads eval/labels/l3-golden.jsonl (trajectory candidates + gold pass/fail) and grades each against
 // the EXTERNAL rubric (eval/l3/rubrics.ts — no self-grading). Modes:
 //   default        deterministic rubric-judge ($0) — the graded path; runs on PR + nightly, free.
-//   --llm          claude-opus-4-8 LLM-judge (needs ANTHROPIC_API_KEY) — the nightly calibrated path.
+//   --llm          LLM-judge (needs ANTHROPIC_API_KEY and PENNY_JUDGE_MODEL) — the nightly calibrated path.
 //
 // Reports κ (Cohen's kappa) vs the labels; gate = κ ≥ 0.6. NOT merge-blocking (per V4 / §6: L3 is
 // judged on "honors documented scope," runs PR + nightly, never hard-blocks a single trial). Prints
@@ -52,13 +52,15 @@ function loadRows(): Row[] {
 
 async function main(): Promise<void> {
   const rows = loadRows();
-  const mode = USE_LLM && process.env.ANTHROPIC_API_KEY ? "llm (claude-opus-4-8)" : "deterministic ($0)";
+  const judgeModel = process.env.PENNY_JUDGE_MODEL?.trim();
+  const useLlm = USE_LLM && !!process.env.ANTHROPIC_API_KEY && !!judgeModel;
+  const mode = useLlm ? `llm (${judgeModel})` : "deterministic ($0)";
   process.stdout.write(`penny eval L3 — GT-10..GT-13 trajectory judge [${mode}] (n=${rows.length})\n`);
 
   const pairs: { pred: Label; gold: Label }[] = [];
   for (const row of rows) {
     let pred: Label;
-    if (USE_LLM && process.env.ANTHROPIC_API_KEY) {
+    if (useLlm) {
       try {
         pred = await judgeLlm(row.task, row.candidate);
       } catch {

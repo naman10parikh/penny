@@ -3,9 +3,9 @@
 //   1. Deterministic rubric-judge ($0, always-on): scores the candidate on the rubric's positive
 //      signals, trap signals, and the required brain citation. No model, no spend — so PR/CI stays
 //      free and the κ-gate is reproducible offline. This is the graded path.
-//   2. LLM-judge (claude-opus-4-8): when ANTHROPIC_API_KEY is set, an Opus judge grades the SAME
-//      rubric (no self-grading — the model judges OTHER trajectories against an external bar). This
-//      is the nightly calibrated path; it lights up with the key, mirroring the deferred-Claude-half
+//   2. LLM-judge: when ANTHROPIC_API_KEY and PENNY_JUDGE_MODEL are set, the model named there grades
+//      the SAME rubric (no self-grading — the model judges OTHER trajectories against an external bar).
+//      This is the nightly calibrated path; it lights up with both, mirroring the deferred-Claude-half
 //      pattern (D8). It is NOT required for the gate — the deterministic judge is.
 //
 // Both return "pass" | "fail"; the scorer (l3/run.ts) calibrates either against the hand labels.
@@ -58,19 +58,24 @@ export function buildJudgePrompt(task: string, candidate: string): { system: str
 }
 
 /**
- * LLM-judge via claude-opus-4-8. Returns the verdict, or throws if ANTHROPIC_API_KEY is unset (the
- * caller decides whether to fall back to the deterministic judge). Uses adaptive thinking; no
- * temperature/budget_tokens (removed on Opus 4.8).
+ * LLM-judge via the model named in PENNY_JUDGE_MODEL (the Messages API needs a model name and penny
+ * never picks one, because a fixed ID goes stale). Returns the verdict, or throws if ANTHROPIC_API_KEY
+ * or PENNY_JUDGE_MODEL is unset (the caller decides whether to fall back to the deterministic judge).
+ * Uses adaptive thinking; no temperature/budget_tokens.
  */
 export async function judgeLlm(task: string, candidate: string): Promise<Label> {
   if (!process.env.ANTHROPIC_API_KEY) {
     throw new Error("ANTHROPIC_API_KEY unset — LLM judge unavailable (use the deterministic judge)");
   }
+  const model = process.env.PENNY_JUDGE_MODEL?.trim();
+  if (!model) {
+    throw new Error("PENNY_JUDGE_MODEL unset: name the judge model to use the LLM judge (or use the deterministic judge)");
+  }
   const { default: Anthropic } = await import("@anthropic-ai/sdk");
   const client = new Anthropic();
   const { system, user } = buildJudgePrompt(task, candidate);
   const res = await client.messages.create({
-    model: "claude-opus-4-8",
+    model,
     max_tokens: 16,
     thinking: { type: "adaptive" },
     system,

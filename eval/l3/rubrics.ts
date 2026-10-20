@@ -3,7 +3,7 @@
 // Each rubric is the objective bar a candidate trajectory must clear: the required design moves
 // (must-have), the traps it must avoid (must-not), and the brain law it must cite (no self-grading —
 // the verdict is the rubric, not a model's confidence). Both judges (the $0 deterministic one and the
-// claude-opus-4-8 LLM judge) grade against THIS rubric, so they are calibrated to the same bar.
+// LLM judge named in PENNY_JUDGE_MODEL) grade against THIS rubric, so they are calibrated to the same bar.
 
 export interface Rubric {
   readonly task: string;
