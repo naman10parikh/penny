@@ -20,7 +20,7 @@ Penny is an agent employee, a packaged specialist agent with its own skills, mem
 
 _Penny is part of an agent-native play for agent-native systems that can eventually be recursively self-improving and evolving, operated by agent employees._
 
-<p align="center"><img alt="Penny: on the command line" src="assets/terminal.svg" width="880"></p>
+<p align="center"><img alt="Penny: a real task, run offline" src="assets/demo.svg" width="880"></p>
 <!-- fleet:header:end -->
 
 penny is the payments and billing employee for coding agents. It wires correct Stripe billing into a product in
